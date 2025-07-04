@@ -123,11 +123,22 @@ install kustomize:
 
 # End of Installetion
 
+
+
 # init control plane
-sudo kubeadm init /
---control-plane-endpoint=10.0.0.25 /
---pod-network-cidr=192.168.0.0/16 /
---cri-socket=unix:///run/containerd/containerd.sock
+Import local control panel images, run:
+    #for tar in binaries/control_panel_images/*; do
+    #  echo "Importing $tar"
+    #  sudo ctr -n k8s.io images import "$tar"
+    #done
+
+
+sudo kubeadm init \
+--kubernetes-version=v1.30.14 \
+--control-plane-endpoint=<IPaddress_of_VM> \
+--pod-network-cidr=192.168.0.0/16 \
+--cri-socket=unix:///run/containerd/containerd.sock \
+--v=5
 
     -if it fails, before exit, clean up, run:
      "sudo kubeadm reset -f; sudo rm -rf /etc/kubernetes/ ; sudo rm -rf /var/lib/etcd ; sudo rm -rf /etc/cni/net.d/ ; sudo rm -rf $HOME/.kube/config"
