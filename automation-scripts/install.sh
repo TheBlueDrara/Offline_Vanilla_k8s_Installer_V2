@@ -13,17 +13,17 @@ install kustomize:
     - to check if installed run: kustomize version
 install k8s vanilla:
 
-- i need this requiremnts for all nodes : containerd iptables apt-transport-https gnupg2 curl sudo
+- i need this requiremnts for all nodes : containerd iptables sudo
 - i also need to install kubelet and kubeadm
 
 
 for to install k8s dependancies:
- - run: "sudo dpkg -i <path to deb packages>"
- - used rdepends utlity to download locally the needed tools and thier dependencies
+    - run: "sudo dpkg -i <path to deb packages>"
+    - used rdepends utlity to download locally the needed tools and thier dependencies
 
 install containerd:
 for the binary part: 
-    tar -xvzf containerd.tar.gz
+    tar -xvzf containerd_bin.tar.gz
     chmod +x containerd/install.sh
     bash containerd/install.sh
 
@@ -41,4 +41,24 @@ for the config part:
     place the config file at: "mv configs/iptables_config_files/network.conf /etc/sysctl.d/99-k8s-cri.conf"
     apply the change run: "sysctl --system"
 
-install 
+install sudo:
+    - first check if sudo is already installed run: "dpkg -l | grep sudo"
+    - if not use the bin files and install sudo
+
+install kubelet:
+    tar -xvzf kublet_bin.tar.gz
+    chmod +x kubelet/install.sh
+    bash kubelet/install.sh
+
+    - Check if installed, run: "kubelet --version"
+
+install kubeadm:
+    tar -xvzf kubeadm_bin.tar.gz
+    sudo dpkg -i kubeadm_1.30.14-1.1_amd64.deb
+
+    - Check if installed, run: "kubeadm version"
+
+# Note, at this point i understand that i dont need to install more tools, as they are need for online deployment of k8s, and i have an offline one.
+
+
+
