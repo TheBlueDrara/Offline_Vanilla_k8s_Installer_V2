@@ -1,5 +1,5 @@
 ### Main Steps
-
+# Use VirtualBox and Vagrant to make 2 vms to work with
 1)
  - Download locally to the storage all the needed dependancies for all the needed tools (k8s vanilla, kubectl, kustomize, helm, sudo, iptables)
  - Create a script for the installer, the script should do the following:
@@ -177,6 +177,8 @@ Install Calico:
     sudo ctr -n k8s.io images import calico-node.tar
     sudo ctr -n k8s.io images import calico-controllers.tar
     sudo ctr -n k8s.io images import calico-cni.tar
+    kubectl apply -f configs/calico_config_files/calico.yaml
+    kubectl taint nodes master node-role.kubernetes.io/control-plane:NoSchedule-
 
 Make sure Node is READY, run: "kubectl get nodes"
 Make sure all pods are running, run: "kubectl get pods -A"
