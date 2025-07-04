@@ -9,3 +9,7 @@ install kubectl:
     - sudo install -o root -g root -m 0755 <path to kubectl> /usr/local/bin/kubectl
     - to check if instaleld run: "kubectl version --client"
 install kustomize:
+    - sudo mv kustomize /usr/local/bin/
+    - to check if installed run: kustomize version
+install k8s vanilla:
+
