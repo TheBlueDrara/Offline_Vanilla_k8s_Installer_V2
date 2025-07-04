@@ -129,10 +129,27 @@ sudo kubeadm init /
 --pod-network-cidr=192.168.0.0/16 /
 --cri-socket=unix:///run/containerd/containerd.sock
 
+    -if it fails, before exit, clean up, run:
+     "sudo kubeadm reset -f; sudo rm -rf /etc/kubernetes/ ; sudo rm -rf /var/lib/etcd ; sudo rm -rf /etc/cni/net.d/ ; sudo rm -rf $HOME/.kube/config"
+
+ After a succsseful init:
+    -if normal user, run:
+  "mkdir -p $HOME/.kube /
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config /
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config"
+
+    -if root user, run:
+    "export KUBECONFIG=/etc/kubernetes/admin.conf"
+
+Deploy a pod network to the cluster:
+    - run: "kubectl apply -f [podnetwork].yaml"
+
+
 #Ip address of the shared access point, currently the control panel static IP address
 #Ip address range for pods in cluster
 #URI to container run time
 
 
 # Another hard part, the script needs to connect to the machines and run the installer
-
+# Now connect to another vm, and run the installer again, but this time, after the connect to a vm, if the vm is a control panel node and k8s is not installed, install the node and join it.
+Connect to another VM:
