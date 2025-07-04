@@ -189,3 +189,17 @@ Make sure all pods are running, run: "kubectl get pods -A"
 # Another hard part, the script needs to connect to the machines and run the installer
 # Now connect to another vm, and run the installer again, but this time, after the connect to a vm, if the vm is a control panel node and k8s is not installed, install the node and join it.
 Connect to another VM:
+
+
+## Joining a Worker node
+Join Worker Node, run:
+
+# Worker node needs only this images: kube-proxy	, pause and calico
+Import local worker images, run:
+    #for tar in binaries/worker_images/*; do
+    #  echo "Importing $tar"
+    #  sudo ctr -n k8s.io images import "$tar"
+    #done
+
+
+
