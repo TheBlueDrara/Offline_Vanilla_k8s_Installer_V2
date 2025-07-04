@@ -85,3 +85,26 @@ Create CNI soft link:
     run: "sudo ln -s /opt/cni/bin /usr/lib/cni"
 
 
+# Now for the hard part, this Part will be before installetion, to check what does exist currently on the machine!
+
+Check if k8s is installed:
+    - Check if the main 2 k8s tools are installed,run: "command -v kubeadm >/dev/null && command -v kubelet >/dev/null"
+    #kubectl does not have to be installed on a worker node, so we must check the main two tools, kubeadm and kubelet
+    -If yes continue to the next check
+    -If not, Run the installetion to install only the control plane node and inform the user
+
+Check if kublet is running as a service, run: "systemctl is-active --quiet kubelet"
+    #If the service is dead, k8s is not running
+    -If not, Run the installetion to install only the control plane node and inform the user
+    -If yes, check what kind of node is that, if control plane node, do nothing, if workder node, update the node
+
+    # The Installetion process must start with this checks, and only than run the install process.
+    #
+Check what kind of node is that:
+    - Check this path for manifests files that exit only on control plane nodes, run: "/etc/kubernetes/manifests/" 
+    - This files: kube-apiserver.yaml , kube-scheduler.yaml , kube-controller-manager.yaml
+        -If this files are missing, its a worker node and needs an update.
+        -If this files are present, do nothing
+
+
+
