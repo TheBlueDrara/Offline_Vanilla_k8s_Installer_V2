@@ -9,7 +9,9 @@
 
 
 
-
+verisons:
+calico v3.27.2
+k8s v1.30.14
 
 
 

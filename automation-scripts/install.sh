@@ -3,7 +3,7 @@
 My Work Flow
 
 # Start with Checks
-
+# Make sure Docker is not installed!
 # This Part will be before installetion, to check what does exist currently on the machine!
 
 Check if k8s is installed:
@@ -140,25 +140,28 @@ sudo kubeadm init \
 --cri-socket=unix:///run/containerd/containerd.sock \
 --v=5
 
-    -if it fails, before exit, clean up, run:
-     "sudo kubeadm reset -f; sudo rm -rf /etc/kubernetes/ ; sudo rm -rf /var/lib/etcd ; sudo rm -rf /etc/cni/net.d/ ; sudo rm -rf $HOME/.kube/config"
+-if it fails, before exit, clean up, run:
+    "sudo kubeadm reset -f; sudo rm -rf /etc/kubernetes/ ; sudo rm -rf /var/lib/etcd ; sudo rm -rf /etc/cni/net.d/ ; sudo rm -rf $HOME/.kube/config"
 
- After a succsseful init:
-    -if normal user, run:
-  "mkdir -p $HOME/.kube /
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config /
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config"
+-If a succsseful init:
+    Set cluster admin user config, run:
+        mkdir -p $HOME/.kube
+        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-    -if root user, run:
-    "export KUBECONFIG=/etc/kubernetes/admin.conf"
+Install Calico:
+# Images were too heavy, so i split them up, and on remote machine, re snip them back togther
+    cat binaries/calico_images/calico-node.tar.part-* > binaries/calico_images/calico-node.tar
+    cat binaries/calico_images/calico-cni.tar.part-* > binaries/calico_images/calico-cni.tar
+    rm -rf *part-*
+    sudo ctr -n k8s.io images import calico-node.tar
+    sudo ctr -n k8s.io images import calico-controllers.tar
+    sudo ctr -n k8s.io images import calico-cni.tar
 
-Deploy a pod network to the cluster:
-    - run: "kubectl apply -f [podnetwork].yaml"
+Make sure Node is READY, run: "kubectl get nodes"
+Make sure all pods are running, run: "kubectl get pods -A"
 
-
-#Ip address of the shared access point, currently the control panel static IP address
-#Ip address range for pods in cluster
-#URI to container run time
+#DONE, Node is up!
 
 
 # Another hard part, the script needs to connect to the machines and run the installer
