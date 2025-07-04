@@ -1,20 +1,14 @@
 1)
- - Figure out and Download locally to the storage all the needed dependancies for all the needed tools
- - Create a script to install the tools
+ - Download locally to the storage all the needed dependancies for all the needed tools (k8s vanilla, kubectl, kustomize, helm)
+ - Create a script for the installer, the script should do the following:
+    - Check if the machine has k8s installed if not install k8s master
+    - if is installed, check if master or slave node, if master do nothing, if slave update the slave
+    - have the option to install on the same machine both slave master node via a parameter pass 
+  - Create a script that wrappers the binaries and script with Makeself tool 
 
 2)
- - Create a Build script that will build a new installer
+ - Create a Jenkings CI pipeline that will check the syntax of the script
+    - if syntax is ok, run the wrapping script and build a new updated installer, save it in storage for later use
 
 3)
- - Create a jenkings file (CI) that will syntax check the bash script, and if it fails it should notify the DevOps team and if success than package the scripts and binaries and save at the storage (wrap the installer?)
-
- 4)
-  - choose a CD, or ansible and create a playbook to copy and run installer, or a pipe line that will ssh to a machine and copy the files and run them
-  - Part of CD is to check if k8s is installed and if it is, if its a worker node, update a new node, and if not k8s so install only master node
-  - or study a different CD
-
-
-  need to go trhew classes :
-  k8s install
-  jenkings CI and makeself build
-  Think about a way to deploy the installer
+  - Create a CD pipeline that will connect to a machine and run the installer
