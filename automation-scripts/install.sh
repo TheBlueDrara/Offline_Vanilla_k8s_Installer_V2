@@ -1,6 +1,6 @@
 
 
-# small note, check if this trhee tools need any kind of dependancies
+My Work Flow
 
 install helm: 
     - place the helm_bin => /usr/local/bin/helm
@@ -16,7 +16,12 @@ install k8s vanilla:
 - i need this requiremnts for all nodes : containerd iptables apt-transport-https gnupg2 curl sudo
 - i also need to install kubelet and kubeadm
 
- install containerd:
+
+for to install k8s dependancies:
+ - run: "sudo dpkg -i <path to deb packages>"
+ - used rdepends utlity to download locally the needed tools and thier dependencies
+
+install containerd:
 for the binary part: 
     tar -xvzf containerd.tar.gz
     chmod +x containerd/install.sh
@@ -24,5 +29,16 @@ for the binary part:
 
 for the config part:
     overwrite the config file run: "echo configs/containerd_config_files/containerd_config.tomal > /etc/containerd/config.toml"
-    dont forget to restart service : "systemctl restart containerd.service"
-    check if service is runnign run: systemcrl status containerd.service"
+    dont forget to restart service run : "systemctl restart containerd.service"
+    check if service is runnign run: "systemcrl status containerd.service"
+
+install and config iptables (linux fire_wall)
+for the binary part: 
+    - first check if iptables is already installed run: "iptables --version"
+    - if not use the bin files and install iptables
+for the config part:
+    - Must be done as root user!
+    place the config file at: "mv configs/iptables_config_files/network.conf /etc/sysctl.d/99-k8s-cri.conf"
+    apply the change run: "sysctl --system"
+
+install 
