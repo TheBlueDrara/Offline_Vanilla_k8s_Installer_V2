@@ -99,12 +99,22 @@ Check if kublet is running as a service, run: "systemctl is-active --quiet kubel
     -If yes, check what kind of node is that, if control plane node, do nothing, if workder node, update the node
 
     # The Installetion process must start with this checks, and only than run the install process.
-    #
 Check what kind of node is that:
     - Check this path for manifests files that exit only on control plane nodes, run: "/etc/kubernetes/manifests/" 
     - This files: kube-apiserver.yaml , kube-scheduler.yaml , kube-controller-manager.yaml
         -If this files are missing, its a worker node and needs an update.
         -If this files are present, do nothing
 
-
+Update the worker node:
+    # Requirement, before updating the worker node, update the control panel node
+    # Or, check what version is the control panel node, and compare it to the worker node
+    - Prevent scheduling new pods, run: "kubectl cordon <node-name>"
+    # Optional - kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+    - install the new version,run: "sudo dpkg -i kubeadm_<new-version>_amd64.deb"
+    - Confirm the new version, run: "kubeadm version"
+    - Upgrade kubeadm, run: "sudo kubeadm upgrade node"
+    - Upgrade kubelet, run: "sudo dpkg -i kubelet_<new-version>_amd64.deb"
+    - Check if kubectl exist on node, if not do nothing, if yes update it, run: "sudo dpkg -i kubectl_<new-version>_amd64.deb"
+    - Restart the services, run: "sudo systemctl daemon-reexec" , "sudo systemctl restart kubelet"
+    - Return back to scheduling new pods, run: "kubectl uncordon <node-name>"
 
