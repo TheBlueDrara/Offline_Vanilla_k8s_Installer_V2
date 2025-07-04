@@ -1,24 +1,51 @@
 
 
 My Work Flow
-#Install only on Master Node
-install helm: 
-    - place the helm_bin => /usr/local/bin/helm
-    - to check if installed run: helm help
 
-install kustomize:
-    - sudo mv kustomize /usr/local/bin/
-    - to check if installed run: kustomize version
+# Start with Checks
+
+# This Part will be before installetion, to check what does exist currently on the machine!
+
+Check if k8s is installed:
+    - Check if the main 2 k8s tools are installed,run: "command -v kubeadm >/dev/null && command -v kubelet >/dev/null"
+    #kubectl does not have to be installed on a worker node, so we must check the main two tools, kubeadm and kubelet
+    -If yes continue to the next check
+    -If not, Run the installetion to install only the control plane node and inform the user
+    Check if kublet is running as a service, run: "systemctl is-active --quiet kubelet"
+        #If the service is dead, k8s is not running
+        -If not, Run the installetion to install only the control plane node and inform the user
+        -If yes, check what kind of node is that, if control plane node, do nothing, if workder node, update the node
+
+    # The Installetion process must start with this checks, and only than run the install process.
+Check what kind of node is that:
+    - Check this path for manifests files that exit only on control plane nodes, run: "/etc/kubernetes/manifests/" 
+    - This files: kube-apiserver.yaml , kube-scheduler.yaml , kube-controller-manager.yaml
+        -If this files are missing, its a worker node and needs an update.
+        -If this files are present, do nothing
+
+Update the worker node:
+    # Requirement, before updating the worker node, update the control panel node
+    # Or, check what version is the control panel node, and compare it to the worker node
+    - Prevent scheduling new pods, run: "kubectl cordon <node-name>"
+    # Optional - kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+    - install the new version,run: "sudo dpkg -i kubeadm_<new-version>_amd64.deb"
+    - Confirm the new version, run: "kubeadm version"
+    - Upgrade kubeadm, run: "sudo kubeadm upgrade node"
+    - Upgrade kubelet, run: "sudo dpkg -i kubelet_<new-version>_amd64.deb"
+    - Check if kubectl exist on node, if not do nothing, if yes update it, run: "sudo dpkg -i kubectl_<new-version>_amd64.deb"
+    - Restart the services, run: "sudo systemctl daemon-reexec" , "sudo systemctl restart kubelet"
+    - Return back to scheduling new pods, run: "kubectl uncordon <node-name>"
+
 
 # Do this steps on each node no matter if control plane or worker node
+# Start of Installetion
+# Importent note, this is the order of installetion of tools! keep it that way!
+# I need this requiremnts for all nodes : containerd iptables sudo kubelet kubectl kubeadm
+# I used rdepends utlity to download locally the needed tools and thier dependencies
+
 install k8s vanilla:
 
-- i need this requiremnts for all nodes : containerd iptables sudo kubelet kubectl kubeadm
-
 for to install k8s dependancies:
-    - used rdepends utlity to download locally the needed tools and thier dependencies
-
-#Importent note, this is the order of installetion of tools! keep it that way!
 
 install sudo:
     - first check if sudo is already installed run: "dpkg -l | grep sudo"
@@ -67,6 +94,7 @@ install kubectl:
     - sudo install -o root -g root -m 0755 <path_to_kubectl_bin_file> /usr/local/bin/kubectl
     - to check if instaleld run: "kubectl version --client"
 
+
 Change to iptables config to legacy:
     - First check if the legacy binary exists, and if yes run this to change config
     legacy="/usr/sbin/iptables-legacy"
@@ -84,37 +112,27 @@ disable swap:
 Create CNI soft link:
     run: "sudo ln -s /opt/cni/bin /usr/lib/cni"
 
+#Install only on Master Node
+install helm: 
+    - place the helm_bin => /usr/local/bin/helm
+    - to check if installed run: helm help
 
-# Now for the hard part, this Part will be before installetion, to check what does exist currently on the machine!
+install kustomize:
+    - sudo mv kustomize /usr/local/bin/
+    - to check if installed run: kustomize version
 
-Check if k8s is installed:
-    - Check if the main 2 k8s tools are installed,run: "command -v kubeadm >/dev/null && command -v kubelet >/dev/null"
-    #kubectl does not have to be installed on a worker node, so we must check the main two tools, kubeadm and kubelet
-    -If yes continue to the next check
-    -If not, Run the installetion to install only the control plane node and inform the user
+# End of Installetion
 
-Check if kublet is running as a service, run: "systemctl is-active --quiet kubelet"
-    #If the service is dead, k8s is not running
-    -If not, Run the installetion to install only the control plane node and inform the user
-    -If yes, check what kind of node is that, if control plane node, do nothing, if workder node, update the node
+# init control plane
+sudo kubeadm init /
+--control-plane-endpoint=10.0.0.25 /
+--pod-network-cidr=192.168.0.0/16 /
+--cri-socket=unix:///run/containerd/containerd.sock
 
-    # The Installetion process must start with this checks, and only than run the install process.
-Check what kind of node is that:
-    - Check this path for manifests files that exit only on control plane nodes, run: "/etc/kubernetes/manifests/" 
-    - This files: kube-apiserver.yaml , kube-scheduler.yaml , kube-controller-manager.yaml
-        -If this files are missing, its a worker node and needs an update.
-        -If this files are present, do nothing
+#Ip address of the shared access point, currently the control panel static IP address
+#Ip address range for pods in cluster
+#URI to container run time
 
-Update the worker node:
-    # Requirement, before updating the worker node, update the control panel node
-    # Or, check what version is the control panel node, and compare it to the worker node
-    - Prevent scheduling new pods, run: "kubectl cordon <node-name>"
-    # Optional - kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-    - install the new version,run: "sudo dpkg -i kubeadm_<new-version>_amd64.deb"
-    - Confirm the new version, run: "kubeadm version"
-    - Upgrade kubeadm, run: "sudo kubeadm upgrade node"
-    - Upgrade kubelet, run: "sudo dpkg -i kubelet_<new-version>_amd64.deb"
-    - Check if kubectl exist on node, if not do nothing, if yes update it, run: "sudo dpkg -i kubectl_<new-version>_amd64.deb"
-    - Restart the services, run: "sudo systemctl daemon-reexec" , "sudo systemctl restart kubelet"
-    - Return back to scheduling new pods, run: "kubectl uncordon <node-name>"
+
+# Another hard part, the script needs to connect to the machines and run the installer
 
