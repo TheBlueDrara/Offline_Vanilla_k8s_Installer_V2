@@ -1,3 +1,4 @@
+set -x
 #!/usr/bin/env bash
 ##################### Start Safe Header ########################
 # Developed by Alex Umansky aka TheBlueDrara
@@ -169,14 +170,14 @@ function install_dependencies() {
         tar -xzf $BIN_PATH/sudo/*.tar.gz
         if ! dpkg -i $BIN_PATH/sudo/*.deb &>$NULL; then
             echo "Something went wrong with sudo installation. Contact the dev team."
-            return 1
+            exit 1
         fi
     fi
 }
 # Install and config iptables
 function install_iptables() {
     if ! iptables --version &>$NULL; then
-        tar -xzf $BIN_PATH/iptables/*.tar.gz
+        tar -xzvf $BIN_PATH/iptables/iptables_bin.tar.gz -C $BIN_PATH/iptables/
         if ! dpkg -i $BIN_PATH/iptables/*.deb &>$NULL; then
             echo "Something went wrong with iptables installation. Contact the dev team."
             exit 1
@@ -382,3 +383,4 @@ function join_worker_node() {
 # after connection to a vagrant machine run sudo -i to login as root before the install
 # in the function, rewrite the $ENABLE_WORKER to =1, to signal that this time if k8s is not installed, run installetion and join a worker node
 main "$@"
+set +x
