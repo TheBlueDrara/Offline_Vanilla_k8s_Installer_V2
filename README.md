@@ -6,6 +6,9 @@
 
 
 
+to run:
+chmod +x installer.sh
+sudo su -c ./installer.sh
 
 
 

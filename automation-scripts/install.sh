@@ -9,14 +9,14 @@ set -o nounset
 set -o pipefail
 #################### End Safe Header ###########################
 . /etc/os-release
-NULL=/dev/null
+# This makes the pathing work and does not depend on root or user pathings, as the root directory will be walys depending on where the script was ran
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+NULL=/dev/null
 BIN_PATH=$PROJECT_ROOT/binaries
 CONFIG_PATH=$PROJECT_ROOT/congifs
 MANIFESTS_PATH=/etc/kubernetes/manifests
-#REAL_USER=${SUDO_USER:-$(logname)}
-#REAL_HOME=$(eval echo "~$REAL_USER")
+
 
 
 function main(){
@@ -58,6 +58,7 @@ function Check_node(){
                 echo "This Node is a worker node, Preparing to update..."
                 Update_node
             else
+                Install_optional_tools
                 echo "This is a Control Plane node, exiting..."
                 return 1
             fi
@@ -65,16 +66,20 @@ function Check_node(){
     fi
 }
 
-
-
 # Start the k8s install process
 function Install_k8s(){
+
     Install_dependencies
+    Install_iptables
     Install_containerd
-
-
+    Kernal_modules
+    Install_kube
+    Disable_swap
+    Install_calico
+    Check_node
 }
 
+# Install different dependencies (may add in future if something is missing)
 function Install_dependencies(){
 
     if ! command -v sudo &>$NULL; then
@@ -84,16 +89,34 @@ function Install_dependencies(){
             return 1
         fi
     fi
+}
+
+# Install iptables linux fire wall, and config the kernal network parameters
+function Install_iptables(){
 
     if ! iptables --version &>$NULL; then
         tar -xzf $BIN_PATH/iptables/*.tar.gz
         if ! dpkg -i install *.deb &>$NULL; then
             echo "Something went wrong with iptables installetion, Contact the dev team"
-            return 1
+            exit 1
         fi
+    fi
+
+    mv $CONFIG_PATH/iptables_conf/network.conf /etc/sysctl.d/99-k8s-cri.conf
+
+    if ! sysctl --system &>$NULL; then
+        echo "Something went wrong with applying new kernel parameter settings in /etc/sysctl.d/99-k8s-cri.conf"
+    fi
+
+    local legacy="/usr/sbin/iptables-legacy"
+    if [ "$current" != "$legacy" ] && [ -e "$legacy" ]; then
+        sudo update-alternatives --set iptables "$legacy"
+    else
+        echo "Failed to chnage iptables to legacy mode, Please contact dev team"
     fi
 }
 
+# Install docker runtime, aka containderd, and rewrite the conf file
 function Install_containerd(){
 
     if ! command -v containerd &>$NULL; then
@@ -104,8 +127,135 @@ function Install_containerd(){
         fi
     fi
 
-     echo $CONFIG_PATH/containerd_conf/config.toml > /etc/containerd/config.toml
+    echo $CONFIG_PATH/containerd_conf/config.toml > /etc/containerd/config.toml
+    systemctl restart containerd.service
+    sleep 1
 
+    if ! systemctl is-active --quiet containerd &>$NULL; then
+        echo "Containderd did not start proporly, Please contact the dev team."
+        exit 1
+    fi
 }
 
-function Update_node(){}
+# Loads kernal modules
+function Kernal_modules(){
+
+    modprobe overlay 
+    modprobe br_netfilter
+
+    if ! lsmod | grep overlay && lsmod | grep br_netfilter; then
+        echo "Kernal modules did not load proporly, Please contact the dev team"
+    fi
+
+    echo -e overlay\\nbr_netfilter > /etc/modules-load.d/k8s.conf
+}
+
+# Install kubectl, kubeadm and kubelet
+function Install_kube(){
+
+    if ! kubelet --version; then
+        echo "Kubelet is not installed, preparing to install now..."
+        tar -xzf $BIN_PATH/kube/kublet_bin.tar.gz
+        if ! dpkg -i install kubelet/*.deb &>$NULL; then
+            echo "There was a problem installing kubelet, Please contact dev team"
+        fi
+    else
+        echo "kubelet already present"
+    fi
+
+    if ! kubeadm version; then
+        echo "Kubeadm is not installed, preparing to install now..."
+        tar -xzf $BIN_PATH/kube/kubadm_bin.tar.gz
+        if ! dpkg -i install kubeadm/*.deb &>$NULL; then
+            echo "There was a problem installing kubeadm, Please contact dev team"
+        fi
+    else
+        echo "kubeadm already present"
+    fi
+
+    if ! kubectl version --client; then
+        echo "Kubectl is not installed, preparing to install now..."
+        tar -xzf $BIN_PATH/kube/kubectl_bin.tar.gz
+        install -o root -g root -m 0755 $BIN_PATH/kube/kubectl /usr/local/bin/kubectl
+    else
+        echo "kubectl already present"
+    fi
+}
+
+# Disable Swap files
+function Disable_swap(){
+
+    swapoff -a
+    sed -i.bak '/\sswap\s/s/^/#/' /etc/fstab
+    if ! swapon --summary; then
+        echo "Swap is disabled at runtime."
+    else
+        echo "Failed to disable swap, Please contact dev team"
+        exit 1
+    fi
+}
+
+# Install and configure calico
+function Install_calico(){
+
+    if ! kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}' || /
+    [[ kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}' -eq 0 ]]; then
+        echo "Calico is not installed or having issuies, preparing to install..." 
+        ln -s /opt/cni/bin /usr/lib/cni
+
+        cat $BIN_PATH/binaries/calico_images/calico-node.tar.part-* > binaries/calico_images/calico-node.tar
+        cat $BIN_PATH/binaries/calico_images/calico-cni.tar.part-* > binaries/calico_images/calico-cni.tar
+        rm -rf $BIN_PATH/binaries/calico_images/*part-*
+
+        local calico_images=("k8s.io images import calico-node.tar" "k8s.io images import calico-controllers.tar" "k8s.io images import calico-cni.tar")
+        for image in ${calico_images[@]}; do
+        ctr -n k8s.io images import $image
+
+        if ! kubectl apply -f $CONFIG_PATH/configs/calico_conf/calico.yaml; then
+            echo "There was a problem installing calico, Please contact dev team"
+            exit 1
+        fi
+    else
+        echo "Calico is present and running"
+    fi
+}
+
+# Install optional tools like helm and kustomize on control plane only 
+function Install_optional_tools(){
+
+    if ! helm help; then
+        tar -xzf $BIN_PATH/optional_tools/helm_bin.tar.gz
+        mv $BIN_PATH/optional_tools/helm /usr/local/bin/helm
+        if ! helm help; then
+            echo "There was a problem installing helm, Please contact dev team"
+        fi
+    else
+        echo "Helm is already present"
+    fi
+
+    if ! kustomize version; then
+        tar -xzf $BIN_PATH/optional_tools/kustomize_bin.tar.gz
+        mv $BIN_PATH/optional_tools/kustomize /usr/local/bin/kustomize
+        if ! kustomize version; then
+            echo "There was a problem installing kustomize, Please contact dev team"
+        fi
+    else
+        echo "kustomize is already present"
+    fi
+}
+
+# Update the existing node
+function Update_node(){
+
+
+
+
+
+
+
+
+
+
+
+    # at the end must exit 1 to stop installer
+}

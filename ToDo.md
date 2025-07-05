@@ -125,22 +125,33 @@ Change to iptables config to legacy:
    # sudo update-alternatives --set iptables "$legacy"
    # fi
 
-disable swap:
+# disable swap:
     sudo swapoff -a
     - Check if worked, run: "sudo swapon --show"
     Comment out the swap in fstab file, run: "sudo sed -i.bak '/\sswap\s/s/^/#/' /etc/fstab"
 
-Create CNI soft link:
+# Create CNI soft link:
     run: "sudo ln -s /opt/cni/bin /usr/lib/cni"
 
 # Install only on Master Node
-install helm: 
+# install helm: 
     - place the helm_bin => /usr/local/bin/helm
     - to check if installed run: helm help
 
-install kustomize:
+# install kustomize:
     - sudo mv kustomize /usr/local/bin/
     - to check if installed run: kustomize version
+
+# Install Calico:
+# Images were too heavy, so i split them up, and on remote machine, re snip them back togther
+    cat binaries/calico_images/calico-node.tar.part-* > binaries/calico_images/calico-node.tar
+    cat binaries/calico_images/calico-cni.tar.part-* > binaries/calico_images/calico-cni.tar
+    rm -rf *part-*
+    sudo ctr -n k8s.io images import calico-node.tar
+    sudo ctr -n k8s.io images import calico-controllers.tar
+    sudo ctr -n k8s.io images import calico-cni.tar
+    kubectl apply -f configs/calico_config_files/calico.yaml
+    kubectl taint nodes master node-role.kubernetes.io/control-plane:NoSchedule-
 
 
 ## End of Installetion
@@ -169,16 +180,6 @@ sudo kubeadm init \
         sudo ls -s /etc/kubernetes/admin.conf $HOME/.kube/config
         sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-Install Calico:
-# Images were too heavy, so i split them up, and on remote machine, re snip them back togther
-    cat binaries/calico_images/calico-node.tar.part-* > binaries/calico_images/calico-node.tar
-    cat binaries/calico_images/calico-cni.tar.part-* > binaries/calico_images/calico-cni.tar
-    rm -rf *part-*
-    sudo ctr -n k8s.io images import calico-node.tar
-    sudo ctr -n k8s.io images import calico-controllers.tar
-    sudo ctr -n k8s.io images import calico-cni.tar
-    kubectl apply -f configs/calico_config_files/calico.yaml
-    kubectl taint nodes master node-role.kubernetes.io/control-plane:NoSchedule-
 
 Make sure Node is READY, run: "kubectl get nodes"
 Make sure all pods are running, run: "kubectl get pods -A"
