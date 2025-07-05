@@ -69,7 +69,7 @@ function Install_k8s(){
     
 
     if ! command -v sudo &>$NULL; then
-        tar -xzf $BIN/sudo_bin_and_dependencies.tar.gz .
+        tar -xzf $BIN/sudo/sudo_bin_and_dependencies.tar.gz
 
 }
 
