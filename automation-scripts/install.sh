@@ -35,7 +35,7 @@ function main() {
     fi
 
     # Check if OS is Debian-based
-    if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
+    if [[ $ID == "debian" ]]; then
         echo "Running on Debian-family distro. Executing main code..."
     else
         echo "This script is designed to run only on Debian-family distros!"
