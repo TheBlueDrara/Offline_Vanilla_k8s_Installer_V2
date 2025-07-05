@@ -16,8 +16,11 @@ NULL=/dev/null
 BIN_PATH=$PROJECT_ROOT/binaries
 CONFIG_PATH=$PROJECT_ROOT/congifs
 MANIFESTS_PATH=/etc/kubernetes/manifests
-
-
+REAL_USER=${SUDO_USER:-$(logname)}
+REAL_HOME=$(eval echo "~$REAL_USER")
+NODE_NAME=$(hostname)
+CONTROL_PANEL_IP_ADDRESS=0.0.0.0
+WORKER_IP_ADDRESS=0.0.0.0
 
 function main(){
 
@@ -39,48 +42,94 @@ function main(){
         echo "Docker is installed, Please remove Docker and rerun the installer"
         exit 1
     fi
-    #Check of k8s is installed or what kind of node is this
-    Check_node
+
+    while [[ $# != 0 ]] ; do
+        case $1 in
+            -m|--master)
+                read -p "Enter Control Plane (master) IP address: " CONTROL_PANEL_IP_ADDRESS
+                if ! validate_ip "$CONTROL_PANEL_IP_ADDRESS"; then
+                    echo "Exiting due to invalid master IP."
+                    exit 1
+                fi
+                ;;
+            -w|--worker)
+                read -p "Enter Worker node IP address: " WORKER_IP_ADDRESS
+                if ! validate_ip "$WORKER_IP_ADDRESS"; then
+                    echo "Exiting due to invalid worker IP."
+                    exit 1
+                fi
+                ;;
+        esac
+    done
+
+    check_node
+    #connect_vm
 
 }
 
+# Checks if given ip address are valid
+validate_ip() {
+
+    local ip=$1
+    if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+        IFS='.' read -r -a octets <<< "$ip"
+        for octet in "${octets[@]}"; do
+            if ((octet < 0 || octet > 255)); then
+                echo " Invalid IP: $ip"
+                exit 1
+            fi
+        done
+        return 0
+    else
+        echo "Invalid IP format: $ip"
+        exit 1
+    fi
+}
+
 #Check if k8s is installed
-function Check_node(){
+function check_node(){
 
     if ! command -v kubeadm &>$NULL && ! command -v kubelet &>$NULL; then
         echo "k8s is not installed, Preparing to install k8s and init a control plane..."
-        Install_k8s
+        install_k8s
     else
         if ! systemctl is-active --quiet kubelet &>$NULL; then
-            Install_k8s
+            install_k8s
         else
             if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
                 echo "This Node is a worker node, Preparing to update..."
-                Update_node
+                if update_node; then
+                    echo "Update was successful"
+                    return 0
+                else
+                    echo "Update failed, Please contact dev team"
+                    exit 1
+                fi
             else
-                Install_optional_tools
-                echo "This is a Control Plane node, exiting..."
-                return 1
+                install_optional_tools
+                echo "This is a Control Plane node"
+                return 0
             fi
         fi
     fi
 }
 
 # Start the k8s install process
-function Install_k8s(){
+function install_k8s(){
 
-    Install_dependencies
-    Install_iptables
-    Install_containerd
-    Kernal_modules
-    Install_kube
-    Disable_swap
-    Install_calico
-    Check_node
+    install_dependencies
+    install_iptables
+    install_containerd
+    kernal_modules
+    install_kube
+    disable_swap
+    install_calico
+    init_control_plane
+    check_node
 }
 
 # Install different dependencies (may add in future if something is missing)
-function Install_dependencies(){
+function install_dependencies(){
 
     if ! command -v sudo &>$NULL; then
         tar -xzf $BIN_PATH/sudo/*.tar.gz
@@ -92,7 +141,7 @@ function Install_dependencies(){
 }
 
 # Install iptables linux fire wall, and config the kernal network parameters
-function Install_iptables(){
+function install_iptables(){
 
     if ! iptables --version &>$NULL; then
         tar -xzf $BIN_PATH/iptables/*.tar.gz
@@ -117,7 +166,7 @@ function Install_iptables(){
 }
 
 # Install docker runtime, aka containderd, and rewrite the conf file
-function Install_containerd(){
+function install_containerd(){
 
     if ! command -v containerd &>$NULL; then
         tar -xzf $BIN_PATH/containerd/*.tar.gz
@@ -138,7 +187,7 @@ function Install_containerd(){
 }
 
 # Loads kernal modules
-function Kernal_modules(){
+function kernal_modules(){
 
     modprobe overlay 
     modprobe br_netfilter
@@ -151,7 +200,7 @@ function Kernal_modules(){
 }
 
 # Install kubectl, kubeadm and kubelet
-function Install_kube(){
+function install_kube(){
 
     if ! kubelet --version; then
         echo "Kubelet is not installed, preparing to install now..."
@@ -183,7 +232,7 @@ function Install_kube(){
 }
 
 # Disable Swap files
-function Disable_swap(){
+function disable_swap(){
 
     swapoff -a
     sed -i.bak '/\sswap\s/s/^/#/' /etc/fstab
@@ -196,7 +245,7 @@ function Disable_swap(){
 }
 
 # Install and configure calico
-function Install_calico(){
+function install_calico(){
 
     if ! kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}' || /
     [[ kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}' -eq 0 ]]; then
@@ -207,9 +256,8 @@ function Install_calico(){
         cat $BIN_PATH/binaries/calico_images/calico-cni.tar.part-* > binaries/calico_images/calico-cni.tar
         rm -rf $BIN_PATH/binaries/calico_images/*part-*
 
-        local calico_images=("k8s.io images import calico-node.tar" "k8s.io images import calico-controllers.tar" "k8s.io images import calico-cni.tar")
-        for image in ${calico_images[@]}; do
-        ctr -n k8s.io images import $image
+        for image in $BIN_PATH/calico_images/*; do
+            ctr -n k8s.io images import $image
 
         if ! kubectl apply -f $CONFIG_PATH/configs/calico_conf/calico.yaml; then
             echo "There was a problem installing calico, Please contact dev team"
@@ -221,7 +269,7 @@ function Install_calico(){
 }
 
 # Install optional tools like helm and kustomize on control plane only 
-function Install_optional_tools(){
+function install_optional_tools(){
 
     if ! helm help; then
         tar -xzf $BIN_PATH/optional_tools/helm_bin.tar.gz
@@ -244,18 +292,95 @@ function Install_optional_tools(){
     fi
 }
 
-# Update the existing node
-function Update_node(){
+# Init the node a control plane
+function init_control_plane(){
+
+    for image in $BIN_PATH/control_panel_images/*; do
+        sudo ctr -n k8s.io images import "$image"
+    done
 
 
+    if ! kubeadm init \
+        --kubernetes-version=v1.30.14 \
+        --control-plane-endpoint=$CONTROL_PANEL_IP_ADDRESS \
+        --pod-network-cidr=192.168.0.0/16 \
+        --cri-socket=unix:///run/containerd/containerd.sock \
+        --v=5; then
 
+        echo "Control Plane init failed, starting clean up, Please contant your dev team"
+        kubeadm reset -f \
+        rm -rf /etc/kubernetes/ \
+        rm -rf /var/lib/etcd \
+        rm -rf /etc/cni/net.d/ \
+        rm $REAL_HOME/.kube/config
+        exit 1
 
+    else
+        echo "Control Plane init was succsesful"
+        mkdir -p $REAL_HOME/.kube
+        ln -s /etc/kubernetes/admin.conf $REAL_HOME/.kube/config
+        chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.kube/config"
+        sleep 1
 
-
-
-
-
-
-
-    # at the end must exit 1 to stop installer
+        echo "The setup for a Control Plane node has finished, Please wait a few mintues so the setup can take place \
+        if you notice that it takes too long, Please contact the dev team \
+        Please run this command - 'kubectl get pods -A' to check if all neccery pods are up \
+        Please run this command - 'kubectl get nodes' to see if Node is READY"
+        sleep 3
+        exit 1
+    fi
 }
+
+# Update the existing node
+function update_node(){
+
+    if ! kubectl cordon "$NODE_NAME"; then
+        echo "Failed to cordon node, Please contact dev team"
+    else
+        tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz
+        if ! dpkg -i "$BIN_PATH/kube/kubeadm/*.deb"; then
+            echo "Failed it install new kubeadm packages, Please contact dev team"
+            return 1
+        else
+            echo "Installed new kubeadm version: $(kubeadm version), Prepering to update node..."
+        fi
+    fi
+
+    if ! kubeadm upgrade node; then
+        return 0
+    fi
+
+    tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz
+    if ! dpkg -i "$BIN_PATH/kube/kubelet/*.deb"
+        echo "Failed to install new version of kubelet, Please contact dev team"
+        return 1
+    fi
+
+    if command -v kubectl &>$NULL; then
+        tar -xzf $BIN_PATH/kube/kubectl_bin.tar.gz -C /usr/local/bin/
+        chmod +x /usr/local/bin/kubectl
+        echo "Kubectl was updated to: $(kubectl version --client --short)"
+    else
+        echo "Kubectl not found on this node. Skipping kubectl upgrade"
+    fi
+
+    if ! systemctl daemon-reexec; then
+        echo "Deamon-reexec failed to restart, Please contact dev team"
+        return 1
+    fi
+
+    if ! systemctl restart kubelet; then
+        echo "Kubelet failed to restart, Please contact dev team"
+        return 1
+    fi
+
+    if ! systemctl is-active --quiet kubelet &>$NULL; then
+        echo "Kubelet failed to activate after upgrade, Please contact dev team"
+        return 1
+    else
+        kubectl uncordon "$NODE_NAME"
+        return 0
+    fi
+}
+
+main "$@"
