@@ -9,6 +9,7 @@ set -o nounset
 set -o pipefail
 #################### End Safe Header ###########################
 . /etc/os-release
+. $CONFIG_PATH/join_command.txt
 # This makes the pathing work and does not depend on root or user pathings, as the root directory will be walys depending on where the script was ran
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -42,6 +43,11 @@ function main(){
         echo "Docker is installed, Please remove Docker and rerun the installer"
         exit 1
     fi
+    # Make sure i get two parameters
+    if [[ $# -lt 2 ]]; then
+        echo "You must provide both -m (master) and -w (worker) parameters"
+        exit 1
+    fi
 
     while [[ $# != 0 ]] ; do
         case $1 in
@@ -64,7 +70,7 @@ function main(){
 
 #add check that recived one or more ip address
     check_node
-    connect_vm
+    #connect_vm
 
 }
 
@@ -102,7 +108,7 @@ function check_node(){
                 fi
                 if update_node; then
                     echo "Update was successful"
-                    return 0
+                    exit 1
                 else
                     echo "Update failed, Please contact dev team"
                     exit 1
@@ -110,15 +116,19 @@ function check_node(){
             else
                 if update_node; then
                     echo "Update was successful"
-                    return 0
+                    exit 1
                 else
                     echo "Update failed, Please contact dev team"
                     exit 1
                 fi
             fi
         else
-            install_optional_tools
             echo "This is a Control Plane node"
+            if ! systemctl is-active --quiet kubelet &> $NULL; then
+                echo "The kubelet service on the master node is inactive, Please contact dev team"
+                exit 1
+            fi 
+            install_optional_tools
             return 0
         fi
     fi
@@ -402,28 +412,18 @@ function update_node(){
     fi
 }
 
-
+# Join the worker node to the control panel
 function join_worker_node(){
 
-
-    JOIN_COMMAND=$(kubeadm token create --print-join-command)
-
-    kubeadm join 10.0.0.25:6443 --token wmgxmn.abjab1upv8da9bp5 \
-    --discovery-token-ca-cert-hash sha256:6b0bceac20f9f9e4dea0c52d8ba3b50d565d7e59ddbdeee6fd7544d140ac78fe
-
-
-
+    echo "This is the command and token that is ran: $join_command"
+    if ! $join_command; then
+        return 1
+    else
+        return 0
 }
 
+# Connect to the worker vm
+#function connect_vm(){}
 
-function connect_vm(){
-
-
-
-
-
-
-
-}
 
 main "$@"
