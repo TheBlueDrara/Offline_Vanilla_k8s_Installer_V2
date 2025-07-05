@@ -31,8 +31,8 @@ Check if k8s is installed:
     -If yes continue to the next check
     -If not, Run the installetion to install only the control plane node and inform the user
     - Check if kublet is running as a service, run: "systemctl is-active --quiet kubelet"
-# If the service is dead, k8s is not running
-        -If not, Run the installetion to install only the control plane node and inform the user
+# If the service is dead, node is not running
+        -If not, Run the installetion, check for missing dependancies, and init a control plane,and inform the user
         -If yes, check what kind of node is that, if control plane node, do nothing, if workder node, update the node
 
 # The Installetion process must start with this checks, and only than run the install process.
@@ -61,14 +61,14 @@ Update the worker node:
 # I need this requiremnts for all nodes : containerd iptables sudo kubelet kubectl kubeadm
 # I used rdepends utlity to download locally the needed tools and thier dependencies
 
-## Start of Installetion
+###### Start of Installetion
 
 install k8s vanilla:
 
 for to install k8s dependancies:
 
 install sudo:
-    - first check if sudo is already installed run: "dpkg -l | grep sudo"
+    - first check if sudo is already installed run: "dpkg -l | grep sudo" or "command -v sudo"
     - if not use the bin files and install sudo
 
 install containerd:
@@ -166,7 +166,7 @@ sudo kubeadm init \
 -If a succsseful init:
     Set cluster admin user config, run:
         mkdir -p $HOME/.kube
-        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo ls -s /etc/kubernetes/admin.conf $HOME/.kube/config
         sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 Install Calico:
