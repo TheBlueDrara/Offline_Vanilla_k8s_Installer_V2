@@ -9,7 +9,6 @@ set -o nounset
 set -o pipefail
 #################### End Safe Header ###########################
 . /etc/os-release
-. $CONFIG_PATH/join_command.txt
 # This makes the pathing work and does not depend on root or user pathings, as the root directory will be walys depending on where the script was ran
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -22,6 +21,7 @@ REAL_HOME=$(eval echo "~$REAL_USER")
 NODE_NAME=$(hostname)
 CONTROL_PANEL_IP_ADDRESS=0.0.0.0
 WORKER_IP_ADDRESS=0.0.0.0
+. $CONFIG_PATH/join_command.txt
 
 function main(){
 
