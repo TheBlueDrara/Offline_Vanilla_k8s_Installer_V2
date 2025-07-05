@@ -7,8 +7,8 @@
 
 
 to run:
-chmod +x installer.sh
-sudo su -c ./installer.sh
+loog in as root user
+run the installer with two parameters -m "MASTER IP" -w "WORKER IP"
 
 
 
