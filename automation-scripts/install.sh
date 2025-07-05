@@ -52,18 +52,20 @@ function main(){
     while [[ $# != 0 ]] ; do
         case $1 in
             -m|--master)
-                read -p "Enter Control Plane (master) IP address: " CONTROL_PANEL_IP_ADDRESS
+                CONTROL_PANEL_IP_ADDRESS="$2"
                 if ! validate_ip "$CONTROL_PANEL_IP_ADDRESS"; then
                     echo "Exiting due to invalid master IP."
                     exit 1
                 fi
+                shift 2
                 ;;
             -w|--worker)
-                read -p "Enter Worker node IP address: " WORKER_IP_ADDRESS
+                WORKER_IP_ADDRESS="$2"
                 if ! validate_ip "$WORKER_IP_ADDRESS"; then
                     echo "Exiting due to invalid worker IP."
                     exit 1
                 fi
+                shift 2
                 ;;
         esac
     done
