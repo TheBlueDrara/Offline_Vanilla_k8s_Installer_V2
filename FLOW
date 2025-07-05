@@ -1,5 +1,5 @@
 # Script flow
-
+run the installer with 2 parameters
 run main function
     check if installer is ran as a logged in root user
     check if os is Debian based

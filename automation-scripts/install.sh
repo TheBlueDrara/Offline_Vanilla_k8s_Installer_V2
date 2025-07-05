@@ -62,13 +62,14 @@ function main(){
         esac
     done
 
+#add check that recived one or more ip address
     check_node
-    #connect_vm
+    connect_vm
 
 }
 
 # Checks if given ip address are valid
-validate_ip() {
+validate_ip(){
 
     local ip=$1
     if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
@@ -88,16 +89,17 @@ validate_ip() {
 
 #Check if k8s is installed
 function check_node(){
-
-    if ! command -v kubeadm &>$NULL && ! command -v kubelet &>$NULL; then
+    if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL; then
         echo "k8s is not installed, Preparing to install k8s and init a control plane..."
-        install_k8s
+        install_k8s "$CONTROL_PANEL_IP_ADDRESS"
     else
-        if ! systemctl is-active --quiet kubelet &>$NULL; then
-            install_k8s
-        else
-            if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
-                echo "This Node is a worker node, Preparing to update..."
+        if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
+            echo "This Node is a worker node"
+            if ! systemctl is-active --quiet kubelet &> $NULL; then
+                if ! join_worker_node "$WORKER_IP_ADDRESS"; then
+                    echo "Failed to join worker node"
+                    exit 1
+                fi
                 if update_node; then
                     echo "Update was successful"
                     return 0
@@ -106,10 +108,18 @@ function check_node(){
                     exit 1
                 fi
             else
-                install_optional_tools
-                echo "This is a Control Plane node"
-                return 0
+                if update_node; then
+                    echo "Update was successful"
+                    return 0
+                else
+                    echo "Update failed, Please contact dev team"
+                    exit 1
+                fi
             fi
+        else
+            install_optional_tools
+            echo "This is a Control Plane node"
+            return 0
         fi
     fi
 }
@@ -117,6 +127,7 @@ function check_node(){
 # Start the k8s install process
 function install_k8s(){
 
+    local ip=$1
     install_dependencies
     install_iptables
     install_containerd
@@ -124,7 +135,13 @@ function install_k8s(){
     install_kube
     disable_swap
     install_calico
-    init_control_plane
+
+    if [[ "$ip" == "$CONTROL_PANEL_IP_ADDRESS" ]]; then
+        init_control_plane "$ip"
+    else
+        join_worker_node "$ip"
+    fi
+
     check_node
 }
 
@@ -320,14 +337,16 @@ function init_control_plane(){
         mkdir -p $REAL_HOME/.kube
         ln -s /etc/kubernetes/admin.conf $REAL_HOME/.kube/config
         chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.kube/config"
-        sleep 1
+
+        join_command=$(kubeadm token create --print-join-command)
+        echo $join_command > $CONFIG_PATH/join_command.txt
 
         echo "The setup for a Control Plane node has finished, Please wait a few mintues so the setup can take place \
         if you notice that it takes too long, Please contact the dev team \
         Please run this command - 'kubectl get pods -A' to check if all neccery pods are up \
         Please run this command - 'kubectl get nodes' to see if Node is READY"
         sleep 3
-        exit 1
+        return 0
     fi
 }
 
@@ -381,6 +400,30 @@ function update_node(){
         kubectl uncordon "$NODE_NAME"
         return 0
     fi
+}
+
+
+function join_worker_node(){
+
+
+    JOIN_COMMAND=$(kubeadm token create --print-join-command)
+
+    kubeadm join 10.0.0.25:6443 --token wmgxmn.abjab1upv8da9bp5 \
+    --discovery-token-ca-cert-hash sha256:6b0bceac20f9f9e4dea0c52d8ba3b50d565d7e59ddbdeee6fd7544d140ac78fe
+
+
+
+}
+
+
+function connect_vm(){
+
+
+
+
+
+
+
 }
 
 main "$@"
