@@ -66,10 +66,19 @@ function Check_node(){
 
 
 function Install_k8s(){
-    
+#Check that all dependencies are installed
+    local dependencies=("sudo" "containerd")
+    for tool in "${dependencies[@]}"; do 
+        if ! command -v $tool &>$NULL; then
+            tar -xzf $BIN/$tool/*.tar.gz
+            if ! dpkg -i install *.deb &>$NULL; then
+                echo f"Something went wrong with {$tool} installetion, Contact the dev team"
+                return 1
+            fi
+        fi
+    done
 
-    if ! command -v sudo &>$NULL; then
-        tar -xzf $BIN/sudo/sudo_bin_and_dependencies.tar.gz
+
 
 }
 
