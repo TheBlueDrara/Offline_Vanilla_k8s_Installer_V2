@@ -1,15 +1,14 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "lmde6"
+  config.vm.box = "generic/debian12"
 
-  # Define control_plane VM
   config.vm.define "control_plane" do |control_plane|
     control_plane.vm.hostname = "control-plane"
     control_plane.vm.network "private_network", ip: "192.168.56.11"
     control_plane.vm.synced_folder "./shared_folder_control_plane", "/home/vagrant/Desktop/shared_folder"
 
-    control_plane.vm.provider "virtualbox" do |vb|
-      vb.memory = 2048
-      vb.cpus = 2
+    control_plane.vm.provider :libvirt do |libvirt|
+      libvirt.memory = 2048
+      libvirt.cpus = 2
     end
   end
 
@@ -19,10 +18,9 @@ Vagrant.configure("2") do |config|
     worker.vm.network "private_network", ip: "192.168.56.12"
     worker.vm.synced_folder "./shared_folder_worker", "/home/vagrant/Desktop/shared_folder"
 
-    worker.vm.provider "virtualbox" do |vb|
-      vb.memory = 2048
-      vb.cpus = 2
+    worker.vm.provider :libvirt do |libvirt|
+      libvirt.memory = 2048
+      libvirt.cpus = 2
     end
   end
 end
-
