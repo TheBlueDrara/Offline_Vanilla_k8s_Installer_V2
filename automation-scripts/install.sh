@@ -101,10 +101,12 @@ function check_node(){
     else
         if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
             echo "This Node is a worker node"
+            if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL; then
+                echo "k8s is not installed, Preparing to install k8s, and join worker node"
+                install_k8s "$WORKER_IP_ADDRESS"
+
             if ! systemctl is-active --quiet kubelet &> $NULL; then
                 if ! join_worker_node "$WORKER_IP_ADDRESS"; then
-                    echo "Failed to join worker node"
-                    exit 1
                 fi
                 if update_node; then
                     echo "Update was successful"
@@ -326,10 +328,10 @@ function init_control_plane(){
         sudo ctr -n k8s.io images import "$image"
     done
 
-
+    local master_ip=$1
     if ! kubeadm init \
         --kubernetes-version=v1.30.14 \
-        --control-plane-endpoint=$CONTROL_PANEL_IP_ADDRESS \
+        --control-plane-endpoint=$master_ip \
         --pod-network-cidr=192.168.0.0/16 \
         --cri-socket=unix:///run/containerd/containerd.sock \
         --v=5; then
@@ -417,7 +419,7 @@ function join_worker_node(){
 
     echo "This is the command and token that is ran: $join_command"
     if ! $join_command; then
-        return 1
+        exit 1
     else
         return 0
 }
