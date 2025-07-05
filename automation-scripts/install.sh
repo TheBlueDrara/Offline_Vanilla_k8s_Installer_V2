@@ -10,8 +10,11 @@ set -o pipefail
 #################### End Safe Header ###########################
 . /etc/os-release
 NULL=/dev/null
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+BIN_PATH=$PROJECT_ROOT/binaries
+CONFIG_PATH=$PROJECT_ROOT/congifs
 MANIFESTS_PATH=/etc/kubernetes/manifests
-BIN=/home/$USER/Offline_Vanilla_k8s_Installer/binaries
 #REAL_USER=${SUDO_USER:-$(logname)}
 #REAL_HOME=$(eval echo "~$REAL_USER")
 
@@ -64,26 +67,45 @@ function Check_node(){
 
 
 
-
+# Start the k8s install process
 function Install_k8s(){
-#Check that all dependencies are installed
-    local dependencies=("sudo" "containerd")
-    for tool in "${dependencies[@]}"; do 
-        if ! command -v $tool &>$NULL; then
-            tar -xzf $BIN/$tool/*.tar.gz
-            if ! dpkg -i install *.deb &>$NULL; then
-                echo f"Something went wrong with {$tool} installetion, Contact the dev team"
-                return 1
-            fi
-        fi
-    done
-
+    Install_dependencies
+    Install_containerd
 
 
 }
 
+function Install_dependencies(){
 
+    if ! command -v sudo &>$NULL; then
+        tar -xzf $BIN_PATH/sudo/*.tar.gz
+        if ! dpkg -i install *.deb &>$NULL; then
+            echo "Something went wrong with sudo installetion, Contact the dev team"
+            return 1
+        fi
+    fi
 
+    if ! iptables --version &>$NULL; then
+        tar -xzf $BIN_PATH/iptables/*.tar.gz
+        if ! dpkg -i install *.deb &>$NULL; then
+            echo "Something went wrong with iptables installetion, Contact the dev team"
+            return 1
+        fi
+    fi
+}
 
+function Install_containerd(){
+
+    if ! command -v containerd &>$NULL; then
+        tar -xzf $BIN_PATH/containerd/*.tar.gz
+        if ! dpkg -i install *.deb &>$NULL; then
+            echo "Something went wrong with containerd installetion, Contact the dev team"
+            return 1
+        fi
+    fi
+
+     echo $CONFIG_PATH/containerd_conf/config.toml > /etc/containerd/config.toml
+
+}
 
 function Update_node(){}

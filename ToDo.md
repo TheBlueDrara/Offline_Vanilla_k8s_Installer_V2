@@ -63,15 +63,15 @@ Update the worker node:
 
 ###### Start of Installetion
 
-install k8s vanilla:
+## install k8s vanilla:
 
-for to install k8s dependancies:
+# for to install k8s dependancies:
 
-install sudo:
+# install sudo:
     - first check if sudo is already installed run: "dpkg -l | grep sudo" or "command -v sudo"
     - if not use the bin files and install sudo
 
-install containerd:
+# install containerd:
 for the binary part: 
     tar -xvzf containerd_bin.tar.gz
     chmod +x containerd/install.sh
@@ -82,14 +82,14 @@ for the config part:
     dont forget to restart service run : "systemctl restart containerd.service"
     check if service is runnign run: "systemcrl status containerd.service"
 
-Load required kernel modules:
+# Load required kernel modules:
 # Requires containderd runtime!
 # Requires to run as root user!
     run:
     modprobe overlay; modprobe br_netfilter
     echo -e overlay\\nbr_netfilter > /etc/modules-load.d/k8s.conf
 
-install and config iptables (linux fire_wall)
+# install and config iptables (linux fire_wall)
 for the binary part: 
     - first check if iptables is already installed run: "iptables --version"
     - if not use the bin files and install iptables
@@ -98,20 +98,20 @@ for the config part #sysctl.d config:
     place the config file at: "mv configs/iptables_config_files/network.conf /etc/sysctl.d/99-k8s-cri.conf"
     apply the change run: "sysctl --system"
 
-install kubelet:
+# install kubelet:
     tar -xvzf kublet_bin.tar.gz
     chmod +x kubelet/install.sh
     bash kubelet/install.sh
 
     - Check if installed, run: "kubelet --version"
 
-install kubeadm:
+# install kubeadm:
     tar -xvzf kubeadm_bin.tar.gz
     sudo dpkg -i kubeadm_1.30.14-1.1_amd64.deb
 
     - Check if installed, run: "kubeadm version"
 
-install kubectl:
+# install kubectl:
     - sudo install -o root -g root -m 0755 <path_to_kubectl_bin_file> /usr/local/bin/kubectl
     - to check if instaleld run: "kubectl version --client"
 
