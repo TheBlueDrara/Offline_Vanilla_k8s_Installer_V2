@@ -235,7 +235,6 @@ function install_kube() {
         echo "Installing crictl..."
         tar -xzf $BIN_PATH/kube/crictl-v1.30.0-linux-amd64.tar.gz -C $BIN_PATH/kube/
         cp $BIN_PATH/kube/crictl /usr/local/bin/
-        sudo cp crictl /usr/local/bin/
         sudo chmod +x /usr/local/bin/crictl
     else
         echo "crictl is present..."
