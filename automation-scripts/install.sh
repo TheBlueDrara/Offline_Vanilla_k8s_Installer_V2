@@ -137,7 +137,7 @@ function check_node() {
 
         else
             echo "This is a Control Plane node"
-            if ! systemctl is-active --quiet kubelet &> "$NULL; then
+            if ! systemctl is-active --quiet kubelet &> $NULL; then
                 echo "The kubelet service on the master node is inactive. Please contact the dev team."
                 exit 1
             fi 
