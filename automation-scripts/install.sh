@@ -184,7 +184,7 @@ function install_iptables() {
         fi
     fi
 
-    mv $CONFIG_PATH/iptables_conf/network.conf /etc/sysctl.d/99-k8s-cri.conf
+    cp $CONFIG_PATH/iptables_conf/network.conf /etc/sysctl.d/99-k8s-cri.conf
 
     if ! sysctl --system &>$NULL; then
         echo "Error applying kernel parameters from /etc/sysctl.d/99-k8s-cri.conf"
