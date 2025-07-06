@@ -1,17 +1,15 @@
-set -x
 #!/usr/bin/env bash
 ##################### Start Safe Header ########################
 # Developed by Alex Umansky aka TheBlueDrara
 # Purpose: Install k8s vanilla locally in offline mode, initialize a control plane,
 # and join a second VM as a worker node to the cluster
-# Date: 4.7.25
+# Date 04.07.2025
+# Version 1.0.0
 set -o errexit
 set -o nounset
 set -o pipefail
 #################### End Safe Header ###########################
 . /etc/os-release
-# This makes the pathing work and does not depend on root or user paths,
-# as the root directory will always depend on where the script was run
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 NULL=/dev/null
@@ -124,7 +122,6 @@ function check_node(){
         install_optional_tools
         return 0
     fi
-fi
 }
 # The installetion process
 function install_k8s(){
@@ -390,8 +387,8 @@ function join_worker_node(){
 }
 
 #function connect_vm(){}
+
 # connect to the second machine, pass the ip address to the installer, run and install k8s and config a worker node
 # after connection to a vagrant machine run sudo -i to login as root before the install
 # in the function, rewrite the $ENABLE_WORKER to =1, to signal that this time if k8s is not installed, run installetion and join a worker node
 main "$@"
-set +x
