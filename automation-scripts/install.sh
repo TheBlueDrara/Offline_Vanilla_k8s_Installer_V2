@@ -28,7 +28,7 @@ WORKER_IP_ADDRESS=0.0.0.0
 . $CONFIG_PATH/join_command.txt
 ENABLE_WORKER=0
 
-function main() {
+function main(){
     # Check if ran as root user
     if [[ $EUID -ne 0 ]]; then
         echo "Please run this script with sudo"
@@ -80,7 +80,7 @@ function main() {
     #connect_vm
 }
 
-function validate_ip() {
+function validate_ip(){
     local ip=$1
     if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
         IFS='.' read -r -a octets <<< "$ip"
@@ -97,32 +97,21 @@ function validate_ip() {
     fi
 }
 # Checking what kind of node and if k8s is installed
-function check_node() {
+function check_node(){
 
-    if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -eq 0 ]]; then
+    if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -ne 1 ]]; then
         echo "K8s is not installed. Preparing to install and initialize control plane..."
         install_k8s "$CONTROL_PANEL_IP_ADDRESS"
 
-    elif ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -eq 1 ]]; then
+    elif ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -ne 0 ]]; then
         echo "K8s is not installed. Preparing to install and join to cluster a worker node..."
         install_k8s "$WORKER_IP_ADDRESS"
 
     else
         if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
             echo "This Node is a worker node"
-            if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL; then
-                echo "K8s is not installed. Preparing to install and join worker node..."
-                install_k8s "$WORKER_IP_ADDRESS"
-            fi
             if ! systemctl is-active --quiet kubelet &> $NULL; then
                 if ! join_worker_node "$WORKER_IP_ADDRESS"; then
-                    exit 1
-                fi
-                if update_node; then
-                    echo "Update was successful"
-                    exit 0
-                else
-                    echo "Update failed. Please contact the dev team."
                     exit 1
                 fi
             else
@@ -137,17 +126,20 @@ function check_node() {
 
         else
             echo "This is a Control Plane node"
+
             if ! systemctl is-active --quiet kubelet &> $NULL; then
                 echo "The kubelet service on the master node is inactive. Please contact the dev team."
                 exit 1
             fi 
+
             install_optional_tools
             return 0
         fi
     fi
 }
 # The installetion process
-function install_k8s() {
+function install_k8s(){
+
     local ip=$1
     install_dependencies
     install_iptables
@@ -158,15 +150,15 @@ function install_k8s() {
     
     if [[ "$ip" == "$CONTROL_PANEL_IP_ADDRESS" ]]; then
         init_control_plane "$ip"
+        install_calico
     else
         join_worker_node "$ip"
     fi
 
-    install_calico
     check_node
 }
 # Install different dependencies, may scale for future use
-function install_dependencies() {
+function install_dependencies(){
     if ! command -v sudo &>$NULL; then
         tar -xzf $BIN_PATH/sudo/*.tar.gz -C $BIN_PATH/sudo/
         if ! dpkg -i $BIN_PATH/sudo/*.deb &>$NULL; then
@@ -176,7 +168,7 @@ function install_dependencies() {
     fi
 }
 # Install and config iptables
-function install_iptables() {
+function install_iptables(){
     if ! iptables --version &>$NULL; then
         tar -xzvf $BIN_PATH/iptables/*.tar.gz -C $BIN_PATH/iptables/
         if ! dpkg -i $BIN_PATH/iptables/*.deb &>$NULL; then
@@ -200,7 +192,7 @@ function install_iptables() {
     fi
 }
 # Install and config docker run time aka containerd
-function install_containerd() {
+function install_containerd(){
     if ! command -v containerd &>$NULL; then
         tar -xzf $BIN_PATH/containerd/*.tar.gz -C $BIN_PATH/containerd/
         if ! dpkg -i $BIN_PATH/containerd/*.deb &>$NULL; then
@@ -219,7 +211,7 @@ function install_containerd() {
     fi
 }
 # Load kernal modules
-function kernel_modules() {
+function kernel_modules(){
     modprobe overlay 
     modprobe br_netfilter
 
@@ -230,7 +222,7 @@ function kernel_modules() {
     echo -e "overlay\nbr_netfilter" > /etc/modules-load.d/k8s.conf
 }
 # Install kubectl, kubeadm and kubelet
-function install_kube() {
+function install_kube(){
 
     if ! crictl --version &>$NULL; then
         echo "Installing crictl..."
@@ -271,7 +263,7 @@ function install_kube() {
     fi
 }
 # Disable swap
-function disable_swap() {
+function disable_swap(){
     swapoff -a
     sed -i.bak '/\sswap\s/s/^/#/' /etc/fstab
     if swapon --summary | grep -q '^'; then
@@ -280,7 +272,7 @@ function disable_swap() {
     fi
 }
 # Install and config calico
-function install_calico() {
+function install_calico(){
     if ! kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}' &> $NULL || \
        [[ $(kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}') -eq 0 ]]; then
         echo "Installing Calico..."
@@ -300,10 +292,11 @@ function install_calico() {
         fi
     else
         echo "Calico is already installed and running."
+        return 0
     fi
 }
 # Install optional tools only on control panel node
-function install_optional_tools() {
+function install_optional_tools(){
     if ! helm help &>$NULL; then
         tar -xzf $BIN_PATH/optional_tools/helm_bin.tar.gz -C $BIN_PATH/optional_tools/
         mv $BIN_PATH/optional_tools/helm /usr/local/bin/helm
@@ -315,7 +308,7 @@ function install_optional_tools() {
     fi
 }
 # Init control panel
-function init_control_plane() {
+function init_control_plane(){
     for image in $BIN_PATH/control_panel_images/*; do
         sudo ctr -n k8s.io images import "$image"
     done
@@ -350,7 +343,7 @@ function init_control_plane() {
     fi
 }
 # Update an existing node
-function update_node() {
+function update_node(){
     if ! kubectl cordon "$NODE_NAME"; then
         echo "Failed to cordon node. Please contact the dev team."
         return 1
@@ -390,7 +383,7 @@ function update_node() {
     fi
 }
 # Join a worker node to the cluster
-function join_worker_node() {
+function join_worker_node(){
     echo "Running join command: $join_command"
     if ! $join_command; then
         exit 1
