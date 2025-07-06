@@ -49,13 +49,70 @@ You can find the project contributors [here](CONTRIBUTORS.md).
 
 ### Project Tree
 
-_(To be completed)_
-
+.
+├── automation-scripts
+│   └── install.sh
+├── binaries
+│   ├── calico_images
+│   │   ├── calico-cni.tar.part-aa
+│   │   ├── calico-cni.tar.part-ab
+│   │   ├── calico-controllers.tar
+│   │   ├── calico-node.tar.part-aa
+│   │   ├── calico-node.tar.part-ab
+│   │   ├── calico-node.tar.part-ac
+│   │   └── calico-node.tar.part-ad
+│   ├── containerd
+│   │   └── containerd_bin.tar.gz
+│   ├── control_panel_images
+│   │   ├── registry.k8s.io_coredns_coredns_v1.11.3.tar
+│   │   ├── registry.k8s.io_etcd_3.5.15-0.tar
+│   │   ├── registry.k8s.io_kube-apiserver_v1.30.14.tar
+│   │   ├── registry.k8s.io_kube-controller-manager_v1.30.14.tar
+│   │   ├── registry.k8s.io_kube-proxy_v1.30.14.tar
+│   │   ├── registry.k8s.io_kube-scheduler_v1.30.14.tar
+│   │   └── registry.k8s.io_pause_3.9.tar
+│   ├── iptables
+│   │   └── iptables_bin.tar.gz
+│   ├── kube
+│   │   ├── crictl-v1.30.0-linux-amd64.tar.gz
+│   │   ├── kubeadm_bin.tar.gz
+│   │   ├── kubectl_bin.tar.gz
+│   │   └── kubelet_bin.tar.gz
+│   ├── optional_tools
+│   │   ├── helm_bin.tar.gz
+│   │   └── kustomize_bin.tar.gz
+│   ├── sudo
+│   │   └── sudo_bin.tar.gz
+│   └── worker_images
+│       ├── registry.k8s.io_kube-proxy_v1.30.14.tar
+│       └── registry.k8s.io_pause_3.9.tar
+├── build-script
+│   └── makeself.sh
+├── cd
+├── ci
+│   └── Jenkinsfile
+├── configs
+│   ├── calico_conf
+│   │   └── calico.yaml
+│   ├── containerd_conf
+│   │   └── config.toml
+│   ├── iptables_conf
+│   │   └── network.conf
+│   └── join_command.txt
+├── CONTRIBUTORS.md
+├── FLOW.md
+├── GUIDE.md
+├── logs
+├── README.md
+├── TASK.md
+├── TODO.txt
+└── vagrant
+    ├── shared_folder_control_plane
+    ├── shared_folder_worker
+    └── Vagrantfile
 
 
 ### My To-Do
-
-
 
 Each time I stumble across a new project that I'm unfamiliar with, I create a To-Do list.
 I try to break the big project into small main pieces.
@@ -69,7 +126,7 @@ You can find my script code flow [here](FLOW.md)
 
 
 
-### Daily Warhammer 40K Quote
+#### Daily Warhammer 40K Quote
 ```
 I have slept for centuries...
 But now I have awoken, and I remember everything.
