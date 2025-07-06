@@ -230,6 +230,17 @@ function kernel_modules() {
 }
 # Install kubectl, kubeadm and kubelet
 function install_kube() {
+
+    if ! crictl --version &>$NULL; then
+        echo "Installing crictl..."
+        tar -xzf $BIN_PATH/kube/crictl-v1.30.0-linux-amd64.tar.gz -C $BIN_PATH/kube/
+        cp $BIN_PATH/kube/crictl /usr/local/bin/
+        sudo cp crictl /usr/local/bin/
+        sudo chmod +x /usr/local/bin/crictl
+    else
+        echo "crictl is present..."
+    fi
+
     if ! kubelet --version &>$NULL; then
         echo "Installing kubelet..."
         tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz -C $BIN_PATH/kube/
@@ -237,6 +248,8 @@ function install_kube() {
         if ! dpkg -i $BIN_PATH/kube/kubelet/*.deb &>$NULL; then
             echo "Failed to install kubelet. Please contact the dev team."
         fi
+    else
+        echo "kubelet is present..."
     fi
 
     if ! kubeadm version &>$NULL; then
@@ -245,12 +258,16 @@ function install_kube() {
         if ! dpkg -i $BIN_PATH/kube/kubeadm/*.deb &>$NULL; then
             echo "Failed to install kubeadm. Please contact the dev team."
         fi
+    else
+        echo "kubeadm is present..."
     fi
 
     if ! kubectl version --client &>$NULL; then
         echo "Installing kubectl..."
         tar -xzf $BIN_PATH/kube/kubectl_bin.tar.gz -C $BIN_PATH/kube/
         install -o root -g root -m 0755 $BIN_PATH/kube/kubectl /usr/local/bin/kubectl
+    else
+        echo "kubectl is present..."
     fi
 }
 # Disable swap
