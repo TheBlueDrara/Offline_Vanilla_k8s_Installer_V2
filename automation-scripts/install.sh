@@ -98,22 +98,23 @@ function validate_ip() {
 }
 # Checking what kind of node and if k8s is installed
 function check_node() {
-    if ! command -v kubeadm &> "$NULL" && ! command -v kubelet &> "$NULL" && [[ $ENABLE_WORKER -eq 0 ]]; then
+
+    if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -eq 0 ]]; then
         echo "K8s is not installed. Preparing to install and initialize control plane..."
         install_k8s "$CONTROL_PANEL_IP_ADDRESS"
 
-    elif ! command -v kubeadm &> "$NULL" && ! command -v kubelet &> "$NULL" && [[ $ENABLE_WORKER -eq 1 ]]; then
+    elif ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -eq 1 ]]; then
         echo "K8s is not installed. Preparing to install and join to cluster a worker node..."
         install_k8s "$WORKER_IP_ADDRESS"
 
-    else  # If first run failed at the end and the kube binaries present, but manifest files are missing as it never inited
+    else
         if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
             echo "This Node is a worker node"
-            if ! command -v kubeadm &> "$NULL" && ! command -v kubelet &> "$NULL"; then
+            if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL; then
                 echo "K8s is not installed. Preparing to install and join worker node..."
                 install_k8s "$WORKER_IP_ADDRESS"
             fi
-            if ! systemctl is-active --quiet kubelet &> "$NULL"; then
+            if ! systemctl is-active --quiet kubelet &> $NULL; then
                 if ! join_worker_node "$WORKER_IP_ADDRESS"; then
                     exit 1
                 fi
@@ -136,7 +137,7 @@ function check_node() {
 
         else
             echo "This is a Control Plane node"
-            if ! systemctl is-active --quiet kubelet &> "$NULL"; then
+            if ! systemctl is-active --quiet kubelet &> "$NULL; then
                 echo "The kubelet service on the master node is inactive. Please contact the dev team."
                 exit 1
             fi 
@@ -293,7 +294,7 @@ function install_calico() {
             ctr -n k8s.io images import "$image"
         done
 
-        if ! kubectl apply -f $CONFIG_PATH/calico_conf/calico.yaml; then
+        if ! kubectl apply --validate=false -f $CONFIG_PATH/calico_conf/calico.yaml; then
             echo "Failed to apply Calico YAML. Please contact the dev team."
             exit 1
         fi
@@ -334,6 +335,8 @@ function init_control_plane() {
         exit 1
     else
         echo "Control Plane init was successful"
+
+        export KUBECONFIG=/etc/kubernetes/admin.conf
         mkdir -p $REAL_HOME/.kube
         ln -s /etc/kubernetes/admin.conf $REAL_HOME/.kube/config
         chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.kube/config"
@@ -342,7 +345,7 @@ function init_control_plane() {
         echo "$join_command" > $CONFIG_PATH/join_command.txt
 
         echo "Control Plane setup completed. Run 'kubectl get pods -A' and 'kubectl get nodes' after a few minutes."
-        sleep 20
+        sleep 10
         return 0
     fi
 }
