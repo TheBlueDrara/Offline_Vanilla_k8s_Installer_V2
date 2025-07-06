@@ -167,7 +167,7 @@ function install_k8s() {
 # Install different dependencies, may scale for future use
 function install_dependencies() {
     if ! command -v sudo &>$NULL; then
-        tar -xzf $BIN_PATH/sudo/*.tar.gz
+        tar -xzf $BIN_PATH/sudo/*.tar.gz -C $BIN_PATH/sudo/
         if ! dpkg -i $BIN_PATH/sudo/*.deb &>$NULL; then
             echo "Something went wrong with sudo installation. Contact the dev team."
             exit 1
@@ -177,7 +177,7 @@ function install_dependencies() {
 # Install and config iptables
 function install_iptables() {
     if ! iptables --version &>$NULL; then
-        tar -xzvf $BIN_PATH/iptables/iptables_bin.tar.gz -C $BIN_PATH/iptables/
+        tar -xzvf $BIN_PATH/iptables/*.tar.gz -C $BIN_PATH/iptables/
         if ! dpkg -i $BIN_PATH/iptables/*.deb &>$NULL; then
             echo "Something went wrong with iptables installation. Contact the dev team."
             exit 1
@@ -201,7 +201,7 @@ function install_iptables() {
 # Install and config docker run time aka containerd
 function install_containerd() {
     if ! command -v containerd &>$NULL; then
-        tar -xzf $BIN_PATH/containerd/*.tar.gz
+        tar -xzf $BIN_PATH/containerd/*.tar.gz -C $BIN_PATH/containerd/
         if ! dpkg -i $BIN_PATH/containerd/*.deb &>$NULL; then
             echo "Something went wrong with containerd installation. Contact the dev team."
             return 1
@@ -232,7 +232,7 @@ function kernel_modules() {
 function install_kube() {
     if ! kubelet --version &>$NULL; then
         echo "Installing kubelet..."
-        tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz
+        tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz -C $BIN_PATH/kube/
         if ! dpkg -i $BIN_PATH/kube/kubelet/*.deb &>$NULL; then
             echo "Failed to install kubelet. Please contact the dev team."
         fi
@@ -240,7 +240,7 @@ function install_kube() {
 
     if ! kubeadm version &>$NULL; then
         echo "Installing kubeadm..."
-        tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz
+        tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz -C $BIN_PATH/kube/
         if ! dpkg -i $BIN_PATH/kube/kubeadm/*.deb &>$NULL; then
             echo "Failed to install kubeadm. Please contact the dev team."
         fi
@@ -248,7 +248,7 @@ function install_kube() {
 
     if ! kubectl version --client &>$NULL; then
         echo "Installing kubectl..."
-        tar -xzf $BIN_PATH/kube/kubectl_bin.tar.gz
+        tar -xzf $BIN_PATH/kube/kubectl_bin.tar.gz -C $BIN_PATH/kube/
         install -o root -g root -m 0755 $BIN_PATH/kube/kubectl /usr/local/bin/kubectl
     fi
 }
@@ -287,12 +287,12 @@ function install_calico() {
 # Install optional tools only on control panel node
 function install_optional_tools() {
     if ! helm help &>$NULL; then
-        tar -xzf $BIN_PATH/optional_tools/helm_bin.tar.gz
+        tar -xzf $BIN_PATH/optional_tools/helm_bin.tar.gz -C $BIN_PATH/optional_tools/
         mv $BIN_PATH/optional_tools/helm /usr/local/bin/helm
     fi
 
     if ! kustomize version &>$NULL; then
-        tar -xzf $BIN_PATH/optional_tools/kustomize_bin.tar.gz
+        tar -xzf $BIN_PATH/optional_tools/kustomize_bin.tar.gz -C $BIN_PATH/optional_tools/
         mv $BIN_PATH/optional_tools/kustomize /usr/local/bin/kustomize
     fi
 }
@@ -336,7 +336,7 @@ function update_node() {
         return 1
     fi
 
-    tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz
+    tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz -C $BIN_PATH/kube/
     if ! dpkg -i $BIN_PATH/kube/kubeadm/*.deb; then
         echo "Failed to install new kubeadm. Please contact the dev team."
         return 1
@@ -346,7 +346,7 @@ function update_node() {
         return 1
     fi
 
-    tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz
+    tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz -C $BIN_PATH/kube/
     if ! dpkg -i $BIN_PATH/kube/kubelet/*.deb; then
         echo "Failed to install new kubelet. Please contact the dev team."
         return 1
