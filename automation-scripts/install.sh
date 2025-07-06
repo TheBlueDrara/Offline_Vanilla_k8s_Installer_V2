@@ -9,9 +9,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 #################### End Safe Header ###########################
-
 . /etc/os-release
-
 # This makes the pathing work and does not depend on root or user paths,
 # as the root directory will always depend on where the script was run
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -114,6 +112,7 @@ function check_node(){
                 if ! join_worker_node "$WORKER_IP_ADDRESS"; then
                     exit 1
                 fi
+                return 0
             else
                 if update_node; then
                     echo "Update was successful"
@@ -276,6 +275,7 @@ function install_calico(){
     if ! kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}' &> $NULL || \
        [[ $(kubectl get daemonset calico-node -n kube-system -o jsonpath='{.status.numberReady}') -eq 0 ]]; then
         echo "Installing Calico..."
+
         ln -s /opt/cni/bin /usr/lib/cni
 
         cat $BIN_PATH/calico_images/calico-node.tar.part-* > $BIN_PATH/calico_images/calico-node.tar
@@ -285,6 +285,8 @@ function install_calico(){
         for image in $BIN_PATH/calico_images/*; do
             ctr -n k8s.io images import "$image"
         done
+
+        export KUBECONFIG=/etc/kubernetes/admin.conf
 
         if ! kubectl apply --validate=false -f $CONFIG_PATH/calico_conf/calico.yaml; then
             echo "Failed to apply Calico YAML. Please contact the dev team."
@@ -328,14 +330,17 @@ function init_control_plane(){
         exit 1
     else
         echo "Control Plane init was successful"
-
-        export KUBECONFIG=/etc/kubernetes/admin.conf
+# Create the admin.conff file both in root and user so calico will work
         mkdir -p $REAL_HOME/.kube
-        ln -s /etc/kubernetes/admin.conf $REAL_HOME/.kube/config
+        cp /etc/kubernetes/admin.conf $REAL_HOME/.kube/config
         chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.kube/config"
 
-        join_command=$(kubeadm token create --print-join-command)
-        echo "$join_command" > $CONFIG_PATH/join_command.txt
+        mkdir -p $HOME/.kube
+        cp /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown "$USER:$USER" "$HOME/.kube/config"
+
+        local join_command=$(kubeadm token create --print-join-command)
+        echo "JOIN_COMMAND=\"$join_command\"" > "$CONFIG_PATH/join_command.txt"
 
         echo "Control Plane setup completed. Run 'kubectl get pods -A' and 'kubectl get nodes' after a few minutes."
         sleep 10
@@ -384,8 +389,8 @@ function update_node(){
 }
 # Join a worker node to the cluster
 function join_worker_node(){
-    echo "Running join command: $join_command"
-    if ! $join_command; then
+    echo "Running join command: $JOIN_COMMAND"
+    if ! eval "$JOIN_COMMAND"; then
         exit 1
     else
         return 0

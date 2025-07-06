@@ -1,8 +1,11 @@
+# Offline vanilla k8s installer
+
+## Overview
 
 
 
 
-
+currently its still work in progress, to join the worker node, need to manualy change variable WORKER_ENABLED=1, and copy the join_command.txt to the worker node
 
 
 
