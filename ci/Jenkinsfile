@@ -11,7 +11,7 @@ pipeline {
     }
 
     stages {
-        stage('Install Required Tools') {
+        stage('Pre Build') {
             steps {
                 sh '''
                     apt-get update
@@ -20,20 +20,28 @@ pipeline {
             }
         }
 
-        stage('Lint Bash Script') {
-            steps {
-                script {
-                    def result = sh(script: "shellcheck ${INSTALL_SCRIPT}", returnStatus: true)
-                    if (result != 0) {
-                        echo 'syntax failed please contact dev team'
-                        currentBuild.result = 'FAILURE'
-                        error('Stopping build due to syntax failure.')
-                    } else {
-                        echo 'Syntax OK'
-                    }
-                }
+    stage('Lint') {
+        steps {
+            script {
+                def result = sh(script:
+                """
+                    if ! shellcheck ${INSTALL_SCRIPT}; then
+                        echo "There was a problem with script syntax, stopping the build..."
+                        exit 1
+                    else
+                        echo "Syntax is great, but I hope you brought sauce for the spageti"
+                        exit 0
+                    fi
+                """,
+                returnStatus: true)
+
+                if (result != 0) {
+                    currentBuild.result = 'FAILURE'
+               }
             }
         }
+    }
+
 
         stage('Build Makeself Installer') {
             steps {
