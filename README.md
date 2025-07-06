@@ -20,30 +20,42 @@ and a Vagrantfile to help you set up the environment.
 - Debian-based distribution
 - Makeself installed
 
-## Dev Notes
+# Dev Notes
 
 ### How-To Guide
 
 You can follow this [Guide](GUIDE.md) to set everything up.
+
+
 
 ### Tool Versions
 
 - Calico v3.27.2
 - Kubernetes v1.30.14
 
+
+
 ### Task
 
 You can find the full task [here](TASK.md).
+
+
 
 ### Contributors
 
 You can find the project contributors [here](CONTRIBUTORS.md).
 
+
+
 ### Project Tree
 
 _(To be completed)_
 
+
+
 ### My To-Do
+
+
 
 Each time I stumble across a new project that I'm unfamiliar with, I create a To-Do list.
 I try to break the big project into small main pieces.
@@ -51,9 +63,11 @@ I try to break the big project into small main pieces.
 I start by doing everything manually and document the process along the way.
 This helps me come to the coding part more prepared and saves me time.
 
-You can find my To-Do list [here](TODO.md). It's unrefined and honest at the moment thinking.
+You can find my To-Do list [here](TODO.txt). It's unrefined and honest at the moment thinking.
 
 You can find my script code flow [here](FLOW.md)
+
+
 
 ### Daily Warhammer 40K Quote
 ```

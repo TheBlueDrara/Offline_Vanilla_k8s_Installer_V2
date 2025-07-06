@@ -1,3 +1,3 @@
 # Contributors
 
-Ive done it my way (:
+I've done it my way (:
