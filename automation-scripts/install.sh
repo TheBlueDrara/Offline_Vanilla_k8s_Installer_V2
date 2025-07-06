@@ -106,7 +106,7 @@ function check_node() {
         echo "K8s is not installed. Preparing to install and join to cluster a worker node..."
         install_k8s "$WORKER_IP_ADDRESS"
 
-    else
+    else  # If first run failed at the end and the kube binaries present, but manifest files are missing as it never inited
         if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
             echo "This Node is a worker node"
             if ! command -v kubeadm &> "$NULL" && ! command -v kubelet &> "$NULL"; then
@@ -154,14 +154,14 @@ function install_k8s() {
     kernel_modules
     install_kube
     disable_swap
-    install_calico
-
+    
     if [[ "$ip" == "$CONTROL_PANEL_IP_ADDRESS" ]]; then
         init_control_plane "$ip"
     else
         join_worker_node "$ip"
     fi
 
+    install_calico
     check_node
 }
 # Install different dependencies, may scale for future use
@@ -233,6 +233,7 @@ function install_kube() {
     if ! kubelet --version &>$NULL; then
         echo "Installing kubelet..."
         tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz -C $BIN_PATH/kube/
+        systemctl daemon-reload
         if ! dpkg -i $BIN_PATH/kube/kubelet/*.deb &>$NULL; then
             echo "Failed to install kubelet. Please contact the dev team."
         fi
@@ -325,7 +326,7 @@ function init_control_plane() {
         echo "$join_command" > $CONFIG_PATH/join_command.txt
 
         echo "Control Plane setup completed. Run 'kubectl get pods -A' and 'kubectl get nodes' after a few minutes."
-        sleep 3
+        sleep 20
         return 0
     fi
 }
@@ -359,6 +360,7 @@ function update_node() {
 
     systemctl daemon-reexec
     systemctl restart kubelet
+    systemctl daemon-reload
 
     if ! systemctl is-active --quiet kubelet &>$NULL; then
         echo "Kubelet failed to activate after upgrade. Please contact the dev team."
