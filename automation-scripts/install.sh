@@ -10,6 +10,7 @@ set -o nounset
 set -o pipefail
 #################### End Safe Header ###########################
 . /etc/os-release
+. /tmp/
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 NULL=/dev/null
@@ -20,8 +21,8 @@ REAL_USER=${SUDO_USER:-$(logname)}
 REAL_HOME=$(eval echo "~$REAL_USER")
 NODE_NAME=$(hostname)
 CONTROL_PANEL_IP_ADDRESS=0.0.0.0
-#. $CONFIG_PATH/join_command.txt
-ROLE=unknown
+ROLE=null
+JOIN_COMMAND_PATH=null
 
 
 
@@ -69,7 +70,7 @@ function main(){
                 shift 2
                 ;;
             -j|--join)
-                JOIN_COMMAND="$2"
+                JOIN_COMMAND_PATH="$2"
                 shift 2
                 ;;
         esac
@@ -105,18 +106,20 @@ function check_node(){
     if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
         echo "This Node is a worker node"
         if ! systemctl is-active --quiet kubelet &> $NULL; then
-            join_worker_node "$WORKER_IP_ADDRESS"
+            join_worker_node
         else
             update_node
         fi
     else
         echo "This is a Control Plane node"
+
         if ! systemctl is-active --quiet kubelet &> $NULL; then
             echo "The kubelet service on the master node is inactive. Please contact the dev team."
             exit 1
-        fi 
-        install_optional_tools
-        return 0
+        fi
+
+        echo "The control plane is already initiated"
+        exit 0
     fi
 }
 # The installetion process
@@ -133,13 +136,11 @@ function install_k8s(){
     if [[ "$role" == "control_plane" ]]; then
         init_control_plane "$CONTROL_PANEL_IP_ADDRESS"
         install_calico
-        return 0
+        install_optional_tools
+        exit 0
     else
         join_worker_node
-        return 0
     fi
-
-    check_node
 }
 # Install different dependencies, may scale for future use
 function install_dependencies(){
@@ -298,22 +299,19 @@ function init_control_plane(){
         sudo ctr -n k8s.io images import "$image"
     done
 
-    local master_ip=$1
+    local control_plane_ip=$1
     if ! kubeadm init \
-        --kubernetes-version=v1.30.14 \
-        --control-plane-endpoint=$master_ip \
-        --pod-network-cidr=192.168.0.0/16 \
-        --cri-socket=unix:///run/containerd/containerd.sock \
-        --v=5; then
+    --kubernetes-version=v1.30.14 \
+    --control-plane-endpoint=$control_plane_ip \
+    --pod-network-cidr=192.168.0.0/16 \
+    --cri-socket=unix:///run/containerd/containerd.sock \
+    --v=5; then
 
-        echo "Control Plane init failed. Starting cleanup..."
-        kubeadm reset -f
-        rm -rf /etc/kubernetes/ /var/lib/etcd /etc/cni/net.d/
-        rm -f $REAL_HOME/.kube/config
-        exit 1
+    echo "Control plane init failed, Please contact dev team"
+
     else
         echo "Control Plane init was successful"
-# Create the admin.conff file both in root and user so calico will work
+
         mkdir -p $REAL_HOME/.kube
         cp /etc/kubernetes/admin.conf $REAL_HOME/.kube/config
         chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.kube/config"
@@ -323,10 +321,12 @@ function init_control_plane(){
         chown "$USER:$USER" "$HOME/.kube/config"
 
         local join_command=$(kubeadm token create --print-join-command)
-        echo "JOIN_COMMAND=\"$join_command\"" > "$CONFIG_PATH/join_command.txt"
+        echo "JOIN_COMMAND=\"$join_command\"" > "$JOIN_COMMAND_PATH"
 
-        echo "Control Plane setup completed. Run 'kubectl get pods -A' and 'kubectl get nodes' after a few minutes."
-        sleep 10
+        echo "Control Plane setup completed. Run \
+        'kubectl get pods -A' \
+        'kubectl get nodes'"
+        sleep 6
         return 0
     fi
 }
@@ -382,9 +382,4 @@ function join_worker_node(){
     fi
 }
 
-#function connect_vm(){}
-
-# connect to the second machine, pass the ip address to the installer, run and install k8s and config a worker node
-# after connection to a vagrant machine run sudo -i to login as root before the install
-# in the function, rewrite the $ENABLE_WORKER to =1, to signal that this time if k8s is not installed, run installetion and join a worker node
 main "$@"
