@@ -20,9 +20,12 @@ REAL_USER=${SUDO_USER:-$(logname)}
 REAL_HOME=$(eval echo "~$REAL_USER")
 NODE_NAME=$(hostname)
 CONTROL_PANEL_IP_ADDRESS=0.0.0.0
-WORKER_IP_ADDRESS=0.0.0.0
-. $CONFIG_PATH/join_command.txt
-ENABLE_WORKER=0
+#. $CONFIG_PATH/join_command.txt
+ROLE=unknown
+
+
+
+
 
 function main(){
     # Check if ran as root user
@@ -46,34 +49,33 @@ function main(){
     fi
 
     # Make sure both -m and -w parameters are provided
-    if [[ $# -lt 2 ]]; then
-        echo "You must provide both -m (master) and -w (worker) parameters"
-        exit 1
-    fi
+    # if [[ $# -lt 2 ]]; then
+    #     echo "You must provide both -m (master) and -w (worker) parameters"
+    #     exit 1
+    # fi
     #Catch parameters from user running installetion
     while [[ $# != 0 ]]; do
         case $1 in
+            -r|--role)
+                ROLE="$2"
+                shift 2
+                ;;
             -m|--master)
-                CONTROL_PANEL_IP_ADDRESS="$2"
-                if ! validate_ip "$CONTROL_PANEL_IP_ADDRESS"; then
-                    echo "Exiting due to invalid master IP."
+                CONTROL_PANEL_IP_ADDRESS_IP="$2"
+                if ! validate_ip "$CONTROL_PANEL_IP_ADDRESS_IP"; then
+                    echo "Exiting due to invalid control plane IP."
                     exit 1
                 fi
                 shift 2
                 ;;
-            -w|--worker)
-                WORKER_IP_ADDRESS="$2"
-                if ! validate_ip "$WORKER_IP_ADDRESS"; then
-                    echo "Exiting due to invalid worker IP."
-                    exit 1
-                fi
+            -j|--join)
+                JOIN_COMMAND="$2"
                 shift 2
                 ;;
         esac
     done
 
     check_node
-    #connect_vm
 }
 
 function validate_ip(){
@@ -96,15 +98,9 @@ function validate_ip(){
 function check_node(){
 
     if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -ne 1 ]]; then
-        echo "K8s is not installed. Preparing to install and initialize control plane..."
-        install_k8s "$CONTROL_PANEL_IP_ADDRESS"
+        echo "K8s is not installed. Preparing to install..."
+        install_k8s "$ROLE"
         return 0
-
-    elif ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -ne 0 ]]; then
-        echo "K8s is not installed. Preparing to install and join to cluster a worker node..."
-        install_k8s "$WORKER_IP_ADDRESS"
-        return 0
-    fi
 
     if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
         echo "This Node is a worker node"
@@ -126,7 +122,7 @@ function check_node(){
 # The installetion process
 function install_k8s(){
 
-    local ip=$1
+    local role=$1
     install_dependencies
     install_iptables
     install_containerd
@@ -134,12 +130,12 @@ function install_k8s(){
     install_kube
     disable_swap
     
-    if [[ "$ip" == "$CONTROL_PANEL_IP_ADDRESS" ]]; then
-        init_control_plane "$ip"
+    if [[ "$role" == "control_plane" ]]; then
+        init_control_plane "$CONTROL_PANEL_IP_ADDRESS"
         install_calico
         return 0
     else
-        join_worker_node "$ip"
+        join_worker_node
         return 0
     fi
 

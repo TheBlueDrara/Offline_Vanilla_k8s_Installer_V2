@@ -180,3 +180,10 @@ vengeance.
 
 — Unknown Venerable Dreadnought
 ```
+
+
+
+
+
+# More requirements
+ansible, sshpass

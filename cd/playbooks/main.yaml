@@ -1,0 +1,13 @@
+- name: Install on Control Plane
+  hosts: control_plane
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: control_plane
+
+- name: Install on Worker Nodes
+  hosts: workers
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: worker
