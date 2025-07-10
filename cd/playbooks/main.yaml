@@ -3,11 +3,11 @@
   become: yes
   gather_facts: yes
   roles:
-    - role: control_plane
+    - role: ../roles/control_plane
 
 - name: Install on Worker Nodes
   hosts: workers
   become: yes
   gather_facts: yes
   roles:
-    - role: worker
+    - role: ../roles/worker

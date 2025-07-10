@@ -1,3 +1,4 @@
+set -x
 #!/usr/bin/env bash
 ##################### Start Safe Header ########################
 # Developed by Alex Umansky aka TheBlueDrara
@@ -57,7 +58,7 @@ function main(){
                 shift 2
                 ;;
             -m|--master)
-                CONTROL_PANEL_IP_ADDRESS_IP="$2"
+                CONTROL_PANEL_IP_ADDRESS="$2"
                 shift 2
                 ;;
             -j|--join)
@@ -73,10 +74,11 @@ function main(){
 # Checking what kind of node and if k8s is installed
 function check_node(){
 
-    if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL && [[ $ENABLE_WORKER -ne 1 ]]; then
+    if ! command -v kubeadm &> $NULL && ! command -v kubelet &> $NULL; then
         echo "K8s is not installed. Preparing to install..."
         install_k8s "$ROLE"
         return 0
+    fi
 
     if ! [[ -f "$MANIFESTS_PATH/kube-apiserver.yaml" || -f "$MANIFESTS_PATH/kube-scheduler.yaml" || -f "$MANIFESTS_PATH/kube-controller-manager.yaml" ]]; then
         echo "This Node is a worker node"
@@ -358,3 +360,5 @@ function join_worker_node(){
 }
 
 main "$@"
+
+set +xs
