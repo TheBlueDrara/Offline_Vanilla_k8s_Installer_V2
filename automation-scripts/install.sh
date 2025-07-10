@@ -10,9 +10,11 @@ set -o nounset
 set -o pipefail
 #################### End Safe Header ###########################
 . /etc/os-release
-. /tmp/
+. /tmp/join_command.txt
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+echo "$SCRIPT_DIR"
+echo "$PROJECT_ROOT"
 NULL=/dev/null
 BIN_PATH=$PROJECT_ROOT/binaries
 CONFIG_PATH=$PROJECT_ROOT/configs
@@ -23,7 +25,6 @@ NODE_NAME=$(hostname)
 CONTROL_PANEL_IP_ADDRESS=0.0.0.0
 ROLE=null
 JOIN_COMMAND_PATH=null
-
 
 
 
@@ -49,12 +50,6 @@ function main(){
         exit 1
     fi
 
-    # Make sure both -m and -w parameters are provided
-    # if [[ $# -lt 2 ]]; then
-    #     echo "You must provide both -m (master) and -w (worker) parameters"
-    #     exit 1
-    # fi
-    #Catch parameters from user running installetion
     while [[ $# != 0 ]]; do
         case $1 in
             -r|--role)
@@ -63,10 +58,6 @@ function main(){
                 ;;
             -m|--master)
                 CONTROL_PANEL_IP_ADDRESS_IP="$2"
-                if ! validate_ip "$CONTROL_PANEL_IP_ADDRESS_IP"; then
-                    echo "Exiting due to invalid control plane IP."
-                    exit 1
-                fi
                 shift 2
                 ;;
             -j|--join)
@@ -79,22 +70,6 @@ function main(){
     check_node
 }
 
-function validate_ip(){
-    local ip=$1
-    if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-        IFS='.' read -r -a octets <<< "$ip"
-        for octet in "${octets[@]}"; do
-            if ((octet < 0 || octet > 255)); then
-                echo "Invalid IP: $ip"
-                exit 1
-            fi
-        done
-        return 0
-    else
-        echo "Invalid IP format: $ip"
-        exit 1
-    fi
-}
 # Checking what kind of node and if k8s is installed
 function check_node(){
 
