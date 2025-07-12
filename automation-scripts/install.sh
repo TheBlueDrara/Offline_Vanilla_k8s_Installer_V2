@@ -297,6 +297,9 @@ function init_control_plane(){
         cp /etc/kubernetes/admin.conf $HOME/.kube/config
         chown "$USER:$USER" "$HOME/.kube/config"
 
+        chmod o+xr /home/vagrant/.kube/
+        chmod o+xr /home/vagrant/.kube/config 
+
         local join_command=$(kubeadm token create --print-join-command)
         echo "JOIN_COMMAND=\"$join_command\"" > "$JOIN_COMMAND_PATH"
 
@@ -306,6 +309,8 @@ function init_control_plane(){
         sleep 6
         return 0
     fi
+
+    # kubeadm token create --print-join-command
 }
 # Update an existing node
 function update_node(){
