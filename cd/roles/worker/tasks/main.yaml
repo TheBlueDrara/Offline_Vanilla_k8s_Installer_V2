@@ -11,6 +11,6 @@
     mode: '0755'
 
 - name: Run installer with worker role
-  shell: sudo -i /root/k8s_installer.run -- -r worker -j /tmp/join_command.sh
+  shell: sudo -i /root/k8s_installer.run -- -r worker
   args:
     executable: /bin/bash

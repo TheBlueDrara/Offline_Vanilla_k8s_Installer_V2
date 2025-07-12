@@ -25,7 +25,7 @@ REAL_HOME=$(eval echo "~$REAL_USER")
 NODE_NAME=$(hostname)
 CONTROL_PANEL_IP_ADDRESS=0.0.0.0
 ROLE=null
-JOIN_COMMAND_PATH=null
+JOIN_COMMAND_PATH=/tmp/join_command.txt
 
 
 
@@ -59,10 +59,6 @@ function main(){
                 ;;
             -m|--master)
                 CONTROL_PANEL_IP_ADDRESS="$2"
-                shift 2
-                ;;
-            -j|--join)
-                JOIN_COMMAND_PATH="$2"
                 shift 2
                 ;;
         esac
