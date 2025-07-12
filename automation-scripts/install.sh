@@ -148,7 +148,7 @@ function install_iptables(){
     local legacy="/usr/sbin/iptables-legacy"
     local current=$(which iptables)
     if [ "$current" != "$legacy" ] && [ -e "$legacy" ]; then
-        sudo update-alternatives --set iptables "$legacy"
+        update-alternatives --set iptables "$legacy"
     else
         echo "Failed to change iptables to legacy mode. Please contact the dev team."
     fi
@@ -190,7 +190,7 @@ function install_kube(){
         echo "Installing crictl..."
         tar -xzf $BIN_PATH/kube/crictl-v1.30.0-linux-amd64.tar.gz -C $BIN_PATH/kube/
         cp $BIN_PATH/kube/crictl /usr/local/bin/
-        sudo chmod +x /usr/local/bin/crictl
+        chmod +x /usr/local/bin/crictl
     else
         echo "crictl is present..."
     fi
@@ -273,7 +273,7 @@ function install_optional_tools(){
 # Init control panel
 function init_control_plane(){
     for image in $BIN_PATH/control_panel_images/*; do
-        sudo ctr -n k8s.io images import "$image"
+        ctr -n k8s.io images import "$image"
     done
 
     local control_plane_ip=$1
