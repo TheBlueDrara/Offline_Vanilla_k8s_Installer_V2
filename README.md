@@ -1,5 +1,18 @@
 # Offline Vanilla Kubernetes Installer
 
+
+# Please Note!
+
+This Repo is under construction, i will be ypdating the project so it will be easily deployed via ansible in the near future!
+
+
+
+
+
+
+
+
+
 ## Overview
 Dear user, here you will find an offline vanilla Kubernetes installer, wrapped using Makeself.
 You will also find a CI Jenkins pipeline to syntax-check the committed code into your GitHub repository,
@@ -184,6 +197,14 @@ vengeance.
 
 
 
-
+#########################
 # More requirements
 ansible, sshpass
+
+
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook main.yaml -i ../inventory/hosts.ini
+
+
+fix that .kube/conf does not show up for the regular user (as the ssh is a root)
+
+another problem is that join command txt file is empty, why it does not rewrite it
