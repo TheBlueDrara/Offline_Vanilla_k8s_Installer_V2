@@ -98,12 +98,13 @@ function check_node(){
 function install_k8s(){
 
     local role=$1
+    disable_swap
     install_dependencies
     install_iptables
     install_containerd
     kernel_modules
     install_kube
-    disable_swap
+    
     
     if [[ "$role" == "control_plane" ]]; then
         init_control_plane "$CONTROL_PANEL_IP_ADDRESS"
