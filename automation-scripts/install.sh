@@ -91,7 +91,7 @@ function check_node(){
             exit 1
         fi
 
-        echo "The control plane is already initiated"
+        echo "The control plane is already initiated... exitting installer..."
         exit 0
     fi
 }
@@ -113,7 +113,6 @@ function install_k8s(){
         exit 0
     else
         join_worker_node
-        install_calico
         exit 0
     fi
 }
