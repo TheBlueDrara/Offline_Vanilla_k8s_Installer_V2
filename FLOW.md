@@ -1,5 +1,8 @@
 # Script flow
 
+
+## This is OUT DATED
+
 Run the script with 2 parameters, control plane and worker node ip address
 
 Run main function

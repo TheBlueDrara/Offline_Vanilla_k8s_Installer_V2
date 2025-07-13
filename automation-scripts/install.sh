@@ -4,8 +4,8 @@ set -x
 # Developed by Alex Umansky aka TheBlueDrara
 # Purpose: Install k8s vanilla locally in offline mode, initialize a control plane,
 # and join a second VM as a worker node to the cluster
-# Date 04.07.2025
-# Version 1.0.0
+# Date 13.07.2025
+# Version 2.0.0
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -20,7 +20,7 @@ NULL=/dev/null
 BIN_PATH=$PROJECT_ROOT/binaries
 CONFIG_PATH=$PROJECT_ROOT/configs
 MANIFESTS_PATH=/etc/kubernetes/manifests
-REAL_USER=vagrant             #${SUDO_USER:-$(logname)}
+REAL_USER=vagrant
 REAL_HOME=$(eval echo "~$REAL_USER")
 NODE_NAME=$(hostname)
 CONTROL_PANEL_IP_ADDRESS=0.0.0.0
@@ -66,7 +66,6 @@ function main(){
 
     check_node
 }
-
 # Checking what kind of node and if k8s is installed
 function check_node(){
 
@@ -305,15 +304,9 @@ function init_control_plane(){
         sleep 6
         return 0
     fi
-
-    # kubeadm token create --print-join-command
 }
 # Update an existing node
 function update_node(){
-    # if ! kubectl cordon "$NODE_NAME"; then
-    #     echo "Failed to cordon node. Please contact the dev team."
-    #     return 1
-    # fi
 
     tar -xzvf $BIN_PATH/kube/kubeadm_bin.tar.gz -C $BIN_PATH/kube/
     if ! dpkg -i $BIN_PATH/kube/kubeadm/*.deb; then
@@ -346,8 +339,6 @@ function update_node(){
         exit 1
     else
         return 0
-#         kubectl uncordon "$NODE_NAME"
-#         return 0
     fi
 }
 # Join a worker node to the cluster
@@ -364,4 +355,4 @@ function join_worker_node(){
 
 main "$@"
 
-set +xs
+set +x

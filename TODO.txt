@@ -1,4 +1,12 @@
 ### Main Steps
+
+
+
+## This is OUT DATED
+
+
+
+
 # Use VirtualBox and Vagrant to make 2 vms to work with
 1)
  - Download locally to the storage all the needed dependancies for all the needed tools (k8s vanilla, kubectl, kustomize, helm, sudo, iptables)

@@ -1,34 +1,34 @@
 # Offline Vanilla Kubernetes Installer
 
 
-# Please Note!
-
-This Repo is under construction, i will be ypdating the project so it will be easily deployed via ansible in the near future!
-
-
-
-
-
-
-
-
-
 ## Overview
 Dear user, here you will find an offline vanilla Kubernetes installer, wrapped using Makeself.
-You will also find a CI Jenkins pipeline to syntax-check the committed code into your GitHub repository,
-and a Vagrantfile to help you set up the environment.
+A Vagrantfile to help you set up the environment.
+Ansbile playbooks to deploy the installer.
+And lastly a CI Jenkins pipeline to syntax-check the committed code into your GitHub repository.
+
 
 ## Features
 - Wrapping script that creates your Makeself offline Kubernetes installer.
-- CI pipeline that syntax-checks and builds a new updated installer upon success.
 - Vagrantfile you can use to quickly provision 2 VMs for the control plane and worker nodes.
-- Modular installer: if run on an empty machine, it will create a control plane node; if a worker node already exists, it will update it.
+- Ansible Playbook that connects to the VMs and deploys the installer.
+- CI pipeline that syntax-checks and builds a new updated installer upon success.
+- The instalettion process is loged in a text file in /tmp/installer.log
+- Modular installer:
+    - If control_panel role passed, it will install k8s and init a control panel node
+    - If worker role passed, it will install k8s and join the worker to the cluster
+    - If control plane already exists, will do nothing
+    - If worker already exists, it will update the worker
+
 
 ## Prerequisites
 - Vagrant, Libvirt plugin, and KVM provider installed
+    - VM image - "generic/debian12" 
+- Makeself installed
+- Ansible Server or installed locally
 - Logged in as root user
 - Debian-based distribution
-- Makeself installed
+
 
 # Dev Notes
 
