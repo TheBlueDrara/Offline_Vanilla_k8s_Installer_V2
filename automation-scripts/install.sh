@@ -309,10 +309,10 @@ function init_control_plane(){
 }
 # Update an existing node
 function update_node(){
-    if ! kubectl cordon "$NODE_NAME"; then
-        echo "Failed to cordon node. Please contact the dev team."
-        return 1
-    fi
+    # if ! kubectl cordon "$NODE_NAME"; then
+    #     echo "Failed to cordon node. Please contact the dev team."
+    #     return 1
+    # fi
 
     tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz -C $BIN_PATH/kube/
     if ! dpkg -i $BIN_PATH/kube/kubeadm/*.deb; then
@@ -344,10 +344,11 @@ function update_node(){
         echo "Kubelet failed to activate after upgrade. Please contact the dev team."
         exit 1
     else
-        kubectl uncordon "$NODE_NAME"
         return 0
-    fi
-}
+#         kubectl uncordon "$NODE_NAME"
+#         return 0
+#     fi
+# }
 # Join a worker node to the cluster
 function join_worker_node(){
     echo "Running join command: $JOIN_COMMAND"
