@@ -114,6 +114,7 @@ function install_k8s(){
     else
         join_worker_node
         install_calico
+        exit 0
     fi
 }
 # Install different dependencies, may scale for future use
@@ -356,7 +357,7 @@ function join_worker_node(){
         exit 1
     else
         echo "Worker was able to join the cluster!"
-        exit 0
+        return 0
     fi
 }
 
