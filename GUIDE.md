@@ -1,8 +1,6 @@
-## How to Use
+# How to Use guide
 
-
-### The Full Cluster Path
-
+### Please Follow along
 
 Start by creating the Makeself installer
 
@@ -12,6 +10,10 @@ chmod +x makeself.sh
 ./makeself.sh
 ```
 
+![Demo](images/makeself.gif)
+
+
+
 Than create your Vagrant VMs:
 
 ```
@@ -19,12 +21,20 @@ cd vagrant
 vagrant up --provider=libvirt
 ```
 
+![Demo](images/vagrant.gif)
+
+
+
 And lastly, run the ansbile main playbook
 
 ```
 cd cd/playbooks/
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook main.yaml -i ../inventory/hosts.ini
 ```
+
+![Demo](images/ansible.gif)
+
+
 
 You can connect to the machines with "vagrant" as username and password
 
@@ -34,6 +44,10 @@ On the control panel node, run this to check if nodes were created
 kubectl get node
 kubectl get pods -A
 ```
+
+![Demo](images/kube.gif)
+
+
 
 And you're done!
 

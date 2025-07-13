@@ -1,5 +1,7 @@
 # Offline Vanilla Kubernetes Installer
 
+![Kubernetes](images/k8s.png) ![Ansible](images/ansible_logo.webp) ![Vagrant](images/vagrant_logo.jpg)
+
 
 ## Overview
 Dear user, here you will find an offline vanilla Kubernetes installer, wrapped using Makeself.
@@ -66,8 +68,7 @@ You can find my script code flow [here](FLOW.md)
 <pre>```
 .
 ├── automation-scripts
-│   ├── install.sh
-│   └── .placeholder
+│   └── install.sh
 ├── binaries
 │   ├── calico_images
 │   │   ├── calico-cni.tar.part-aa
@@ -91,26 +92,35 @@ You can find my script code flow [here](FLOW.md)
 │   │   └── iptables_bin.tar.gz
 │   ├── kube
 │   │   ├── crictl-v1.30.0-linux-amd64.tar.gz
+│   │   ├── cri-tools_1.30.1-1.1_amd64.deb
 │   │   ├── kubeadm_bin.tar.gz
 │   │   ├── kubectl_bin.tar.gz
 │   │   └── kubelet_bin.tar.gz
 │   ├── optional_tools
 │   │   ├── helm_bin.tar.gz
 │   │   └── kustomize_bin.tar.gz
-│   ├── .placeholder
 │   ├── sudo
 │   │   └── sudo_bin.tar.gz
 │   └── worker_images
 │       ├── registry.k8s.io_kube-proxy_v1.30.14.tar
 │       └── registry.k8s.io_pause_3.9.tar
 ├── build-script
-│   ├── makeself.sh
-│   └── .placeholder
+│   └── makeself.sh
 ├── cd
-│   └── .placeholder
+│   ├── inventory
+│   │   └── hosts.ini
+│   ├── playbooks
+│   │   └── main.yaml
+│   ├── roles
+│   │   ├── control_plane
+│   │   │   └── tasks
+│   │   │       └── main.yaml
+│   │   └── worker
+│   │       └── tasks
+│   │           └── main.yaml
+│   └── ansible.cfg
 ├── ci
-│   ├── Jenkinsfile
-│   └── .placeholder
+│   └── Jenkinsfile
 ├── configs
 │   ├── calico_conf
 │   │   └── calico.yaml
@@ -118,67 +128,23 @@ You can find my script code flow [here](FLOW.md)
 │   │   └── config.toml
 │   ├── iptables_conf
 │   │   └── network.conf
-│   ├── join_command.txt
-│   └── .placeholder
+│   └── join_command.txt
+├── images
+│   ├── ansible.gif
+│   ├── ansible_logo.webp
+│   ├── k8s.png
+│   ├── kube.gif
+│   ├── makeself.gif
+│   ├── vagrant.gif
+│   └── vagrant_logo.jpg
+├── vagrant
+│   └── Vagrantfile
 ├── CONTRIBUTORS.md
 ├── FLOW.md
-├── .git
-│   ├── branches
-│   ├── config
-│   ├── description
-│   ├── HEAD
-│   ├── hooks
-│   │   ├── applypatch-msg.sample
-│   │   ├── commit-msg.sample
-│   │   ├── fsmonitor-watchman.sample
-│   │   ├── post-update.sample
-│   │   ├── pre-applypatch.sample
-│   │   ├── pre-commit.sample
-│   │   ├── pre-merge-commit.sample
-│   │   ├── prepare-commit-msg.sample
-│   │   ├── pre-push.sample
-│   │   ├── pre-rebase.sample
-│   │   ├── pre-receive.sample
-│   │   ├── push-to-checkout.sample
-│   │   └── update.sample
-│   ├── index
-│   ├── info
-│   │   └── exclude
-│   ├── logs
-│   │   ├── HEAD
-│   │   └── refs
-│   │       ├── heads
-│   │       │   └── main
-│   │       └── remotes
-│   │           └── origin
-│   │               └── HEAD
-│   ├── objects
-│   │   ├── info
-│   │   └── pack
-│   │       ├── pack-36fd71097bdf2cd3e8cd1f8ff1e50cd5a889d0f6.idx
-│   │       └── pack-36fd71097bdf2cd3e8cd1f8ff1e50cd5a889d0f6.pack
-│   ├── packed-refs
-│   └── refs
-│       ├── heads
-│       │   └── main
-│       ├── remotes
-│       │   └── origin
-│       │       └── HEAD
-│       └── tags
-├── .gitignore
 ├── GUIDE.md
-├── logs
-│   └── .placeholder
 ├── README.md
 ├── TASK.md
-├── TODO.txt
-└── vagrant
-    ├── shared_folder_control_plane
-    │   └── .placeholder
-    ├── shared_folder_worker
-    │   └── .placeholder
-    └── Vagrantfile
-
+└── TODO.txt
 ```</pre>
 
 
