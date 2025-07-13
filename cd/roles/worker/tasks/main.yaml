@@ -6,8 +6,8 @@
 
 - name: Copy join command from local fetched copy
   copy:
-    src: /tmp/join_command.sh
-    dest: /tmp/join_command.sh
+    src: /tmp/join_command.txt
+    dest: /tmp/join_command.txt
     mode: '0755'
 
 - name: Run installer with worker role

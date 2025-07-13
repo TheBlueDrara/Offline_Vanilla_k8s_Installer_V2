@@ -20,7 +20,7 @@ NULL=/dev/null
 BIN_PATH=$PROJECT_ROOT/binaries
 CONFIG_PATH=$PROJECT_ROOT/configs
 MANIFESTS_PATH=/etc/kubernetes/manifests
-REAL_USER=${SUDO_USER:-$(logname)}
+REAL_USER=vagrant             #${SUDO_USER:-$(logname)}
 REAL_HOME=$(eval echo "~$REAL_USER")
 NODE_NAME=$(hostname)
 CONTROL_PANEL_IP_ADDRESS=0.0.0.0
@@ -287,15 +287,13 @@ function init_control_plane(){
 
         mkdir -p $REAL_HOME/.kube
         cp /etc/kubernetes/admin.conf $REAL_HOME/.kube/config
+        chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.kube/"
         chown "$REAL_USER:$REAL_USER" "$REAL_HOME/.kube/config"
 
         mkdir -p $HOME/.kube
         cp /etc/kubernetes/admin.conf $HOME/.kube/config
         chown "$USER:$USER" "$HOME/.kube/config"
-
-        chmod o+xr /home/vagrant/.kube/
-        chmod o+xr /home/vagrant/.kube/config 
-
+    
         local join_command=$(kubeadm token create --print-join-command)
         echo "JOIN_COMMAND=\"$join_command\"" > "$JOIN_COMMAND_PATH"
 

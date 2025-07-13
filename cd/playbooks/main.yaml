@@ -1,6 +1,6 @@
 - name: Install on Control Plane
   hosts: control_plane
-  become: no
+  become: yes
   gather_facts: yes
   roles:
     - role: ../roles/control_plane
