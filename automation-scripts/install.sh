@@ -347,8 +347,8 @@ function update_node(){
         return 0
 #         kubectl uncordon "$NODE_NAME"
 #         return 0
-#     fi
-# }
+    fi
+}
 # Join a worker node to the cluster
 function join_worker_node(){
     echo "Running join command: $JOIN_COMMAND"
