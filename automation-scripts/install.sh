@@ -113,6 +113,7 @@ function install_k8s(){
         exit 0
     else
         join_worker_node
+        install_calico
     fi
 }
 # Install different dependencies, may scale for future use
@@ -315,18 +316,19 @@ function update_node(){
 
     tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz -C $BIN_PATH/kube/
     if ! dpkg -i $BIN_PATH/kube/kubeadm/*.deb; then
-        echo "Failed to install new kubeadm. Please contact the dev team."
-        return 1
+        echo "Failed to install new version of kubeadm. Please contact the dev team."
+        exit 1
     fi
 
     if ! kubeadm upgrade node; then
-        return 1
+        echo "Failed to upgrade worker node via kubeadm, Please contact dev team" 
+        exit 1
     fi
 
     tar -xzf $BIN_PATH/kube/kubelet_bin.tar.gz -C $BIN_PATH/kube/
     if ! dpkg -i $BIN_PATH/kube/kubelet/*.deb; then
-        echo "Failed to install new kubelet. Please contact the dev team."
-        return 1
+        echo "Failed to install new version kubelet. Please contact the dev team."
+        exit 1
     fi
 
     if command -v kubectl &>$NULL; then
@@ -340,7 +342,7 @@ function update_node(){
 
     if ! systemctl is-active --quiet kubelet &>$NULL; then
         echo "Kubelet failed to activate after upgrade. Please contact the dev team."
-        return 1
+        exit 1
     else
         kubectl uncordon "$NODE_NAME"
         return 0

@@ -10,7 +10,7 @@
     executable: /bin/bash
 
 - name: Run installer with control_plane role as root
-  shell: sudo -i /tmp/k8s_installer.run -- -r control_plane -m {{ ansible_host }} > /tmp/installer.log 2>&1
+  shell: sudo -i /tmp/k8s_installer.run -- -r control_plane -m {{ ansible_host }} >> /tmp/installer.log 2>&1
   args:
     executable: /bin/bash
 
