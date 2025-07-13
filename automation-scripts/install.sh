@@ -188,6 +188,7 @@ function install_kube(){
         tar -xzf $BIN_PATH/kube/crictl-v1.30.0-linux-amd64.tar.gz -C $BIN_PATH/kube/
         cp $BIN_PATH/kube/crictl /usr/local/bin/
         chmod +x /usr/local/bin/crictl
+        dpkg -i $BIN_PATH/kube/cri-tools_1.30.1-1.1_amd64.deb
     else
         echo "crictl is present..."
     fi
@@ -314,7 +315,7 @@ function update_node(){
     #     return 1
     # fi
 
-    tar -xzf $BIN_PATH/kube/kubeadm_bin.tar.gz -C $BIN_PATH/kube/
+    tar -xzvf $BIN_PATH/kube/kubeadm_bin.tar.gz -C $BIN_PATH/kube/
     if ! dpkg -i $BIN_PATH/kube/kubeadm/*.deb; then
         echo "Failed to install new version of kubeadm. Please contact the dev team."
         exit 1
