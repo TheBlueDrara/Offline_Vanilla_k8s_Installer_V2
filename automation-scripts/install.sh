@@ -337,8 +337,8 @@ function update_node(){
     fi
 
     systemctl daemon-reexec
-    systemctl restart kubelet
     systemctl daemon-reload
+    systemctl restart kubelet
 
     if ! systemctl is-active --quiet kubelet &>$NULL; then
         echo "Kubelet failed to activate after upgrade. Please contact the dev team."
