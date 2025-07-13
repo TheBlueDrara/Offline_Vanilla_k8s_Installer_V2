@@ -1,9 +1,9 @@
 # Offline Vanilla Kubernetes Installer
 
 <p align="center">
-  <img src="images/k8s.webp" alt="Kubernetes" width="300"/>
-  <img src="images/ansible.png" alt="Ansible" width="300"/>
-  <img src="images/vagrant.png" alt="Vagrant" width="300"/>
+  <img src="images/k8s.webp" alt="Kubernetes" width="450"/>
+  <img src="images/ansible.png" alt="Ansible" width="450"/>
+  <img src="images/vagrant.png" alt="Vagrant" width="450"/>
 </p>
 
 
