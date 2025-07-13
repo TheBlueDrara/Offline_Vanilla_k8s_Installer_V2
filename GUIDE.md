@@ -1,10 +1,10 @@
-# How to Use guide
+# How to Use Guide
 
-### Please Follow along
+### Please Follow Along
 
-Start by creating the Makeself installer
+Start by creating the Makeself installer:
 
-```
+```bash
 cd build-script
 chmod +x makeself.sh
 ./makeself.sh
@@ -12,48 +12,42 @@ chmod +x makeself.sh
 
 ![Demo](images/makeself.gif)
 
+Then, create your Vagrant VMs:
 
-
-Than create your Vagrant VMs:
-
-```
+```bash
 cd vagrant
 vagrant up --provider=libvirt
 ```
 
 ![Demo](images/vagrant.gif)
 
+Finally, run the Ansible main playbook:
 
-
-And lastly, run the ansbile main playbook
-
-```
+```bash
 cd cd/playbooks/
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook main.yaml -i ../inventory/hosts.ini
 ```
 
 ![Demo](images/ansible.gif)
 
+You can connect to the machines using **vagrant** as the username and password.
 
+On the control plane node, run the following to check if nodes were created:
 
-You can connect to the machines with "vagrant" as username and password
-
-On the control panel node, run this to check if nodes were created
-
-```
-kubectl get node
+```bash
+kubectl get nodes
 kubectl get pods -A
 ```
 
 ![Demo](images/kube.gif)
 
-
-
 And you're done!
+
+---
 
 ### Notes
 
-- You can remove the ANSIBLE_HOST_KEY_CHECKING=False if you use ssh keys, or you can edit this line into .bashrc to make it permanent
-- If you want to make more worker nodes, edit the vagrant file and add more vms, than edit the hosts.ini file and add the new VMs IPs
-
-
+- You can remove `ANSIBLE_HOST_KEY_CHECKING=False` if you use SSH keys, or add it to your `.bashrc` to make it permanent.
+- To add more worker nodes:
+  - Edit the Vagrantfile and add more VMs.
+  - Edit the `hosts.ini` file and include the new VMs' IP addresses.
